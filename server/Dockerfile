@@ -4,10 +4,11 @@ WORKDIR /app
 
 RUN apk add --no-cache git
 
-COPY go.mod ./
+COPY server/go.mod ./
+COPY server/go.sum ./
 RUN go mod download
 
-COPY . .
+COPY server/ ./
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o kinoform-server .
 
 # Runtime stage
