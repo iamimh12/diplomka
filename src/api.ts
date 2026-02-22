@@ -1,5 +1,13 @@
 import type { Booking, Hall, Movie, Seat, Session, User } from './types'
 
+declare global {
+  interface Window {
+    __APP_CONFIG__?: {
+      API_URL?: string
+    }
+  }
+}
+
 function normalizeApiBase(rawBase?: string) {
   if (!rawBase) {
     return '/api'
@@ -11,7 +19,15 @@ function normalizeApiBase(rawBase?: string) {
   return `${trimmed}/api`
 }
 
-const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL as string | undefined)
+function getApiUrlFromConfig() {
+  const runtimeValue = window.__APP_CONFIG__?.API_URL?.trim()
+  if (runtimeValue) {
+    return runtimeValue
+  }
+  return import.meta.env.VITE_API_URL as string | undefined
+}
+
+const API_BASE = normalizeApiBase(getApiUrlFromConfig())
 
 type ApiError = {
   error: string
