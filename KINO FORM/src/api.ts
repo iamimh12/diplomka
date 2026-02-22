@@ -1,6 +1,17 @@
-﻿import type { Booking, Hall, Movie, Seat, Session, User } from './types'
+import type { Booking, Hall, Movie, Seat, Session, User } from './types'
 
-const API_BASE = '/api'
+function normalizeApiBase(rawBase?: string) {
+  if (!rawBase) {
+    return '/api'
+  }
+  const trimmed = rawBase.replace(/\/$/, '')
+  if (trimmed.endsWith('/api')) {
+    return trimmed
+  }
+  return `${trimmed}/api`
+}
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL as string | undefined)
 
 type ApiError = {
   error: string
