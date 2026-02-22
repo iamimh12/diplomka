@@ -1,5 +1,5 @@
 ﻿# Build stage
-FROM golang:1.22-alpine AS build
+FROM golang:1.25 AS builder
 WORKDIR /app
 
 RUN apk add --no-cache git
