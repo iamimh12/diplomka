@@ -176,11 +176,17 @@ func main() {
     router := gin.New()
     router.Use(gin.Recovery())
     router.Use(ginLogger(logger))
+    allowOrigins := parseOrigins(cfg.CorsOrigin)
+    allowCredentials := true
+    if strings.TrimSpace(cfg.CorsOrigin) == "*" {
+        allowOrigins = []string{"*"}
+        allowCredentials = false
+    }
     router.Use(cors.New(cors.Config{
-        AllowOrigins:     parseOrigins(cfg.CorsOrigin),
+        AllowOrigins:     allowOrigins,
         AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
         AllowHeaders:     []string{"Authorization", "Content-Type"},
-        AllowCredentials: true,
+        AllowCredentials: allowCredentials,
         MaxAge:           12 * time.Hour,
     }))
 
