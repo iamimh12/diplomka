@@ -31,6 +31,16 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
       ...(options.headers || {}),
     },
   })
+  const contentType = response.headers.get('content-type') ?? ''
+  const isJson = contentType.includes('application/json')
+
+  if (!isJson) {
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status})`)
+    }
+    throw new Error('API misconfigured: expected JSON response')
+  }
+
   const data = await response.json().catch(() => ({}))
   if (!response.ok) {
     const message = (data as ApiError).error || 'Request failed'
@@ -40,16 +50,28 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 }
 
 export async function fetchMovies() {
-  return request<Movie[]>('/movies')
+  const data = await request<unknown>('/movies')
+  if (!Array.isArray(data)) {
+    throw new Error('API misconfigured: movies payload is not an array')
+  }
+  return data as Movie[]
 }
 
 export async function fetchSessions(movieId?: number) {
   const query = movieId ? `?movie_id=${movieId}` : ''
-  return request<Session[]>(`/sessions${query}`)
+  const data = await request<unknown>(`/sessions${query}`)
+  if (!Array.isArray(data)) {
+    throw new Error('API misconfigured: sessions payload is not an array')
+  }
+  return data as Session[]
 }
 
 export async function fetchHalls() {
-  return request<Hall[]>('/halls')
+  const data = await request<unknown>('/halls')
+  if (!Array.isArray(data)) {
+    throw new Error('API misconfigured: halls payload is not an array')
+  }
+  return data as Hall[]
 }
 
 export async function fetchSeats(hallId: number) {
