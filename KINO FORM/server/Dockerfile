@@ -1,5 +1,5 @@
 ﻿# Build stage
-FROM golang:1.25 AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 RUN apk add --no-cache git
@@ -17,7 +17,7 @@ WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
 USER app
 
-COPY --from=build /app/kinoform-server ./kinoform-server
+COPY --from=builder /app/kinoform-server ./kinoform-server
 
 EXPOSE 8080
 
