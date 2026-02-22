@@ -1,4 +1,4 @@
-﻿module kinoform
+module kinoform
 
 go 1.22
 
