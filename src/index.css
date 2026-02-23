@@ -26,6 +26,8 @@
   --panel-accent: linear-gradient(135deg, #fff5f2, #ffe7e1);
   --seat-booked-bg: #d7d7d7;
   --seat-booked-ink: #7a7a7a;
+  --seat-ink: #101115;
+  --seat-selected-ink: #ffffff;
   --flash-success-bg: #e0f6e6;
   --flash-success-ink: #1e4b2d;
   --flash-error-bg: #ffe4de;
@@ -59,6 +61,8 @@
   --panel-accent: linear-gradient(135deg, rgba(255, 139, 107, 0.16), rgba(255, 107, 74, 0.12));
   --seat-booked-bg: #2d2f36;
   --seat-booked-ink: #9aa0ab;
+  --seat-ink: #f7f8fa;
+  --seat-selected-ink: #ffffff;
   --flash-success-bg: rgba(66, 160, 98, 0.2);
   --flash-success-ink: #a6e3b5;
   --flash-error-bg: rgba(191, 82, 68, 0.2);
@@ -72,6 +76,16 @@
     radial-gradient(circle at 20% 20%, rgba(255, 120, 80, 0.15), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(88, 140, 165, 0.2), transparent 40%),
     linear-gradient(130deg, #0f1116 0%, #151821 100%);
+}
+
+:root[data-theme='dark'] .movie-card__body h3,
+:root[data-theme='dark'] .session-card__title,
+:root[data-theme='dark'] .session-card span,
+:root[data-theme='dark'] .session-pill span,
+:root[data-theme='dark'] .session-pill strong,
+:root[data-theme='dark'] .booking-card span,
+:root[data-theme='dark'] .admin__item span {
+  color: var(--ink);
 }
 
 * {

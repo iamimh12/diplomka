@@ -1,5 +1,5 @@
 ﻿
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   adminCreateHall,
   adminCreateMovie,
@@ -451,11 +451,15 @@ function App() {
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
   const [adminTab, setAdminTab] = useState<'movies' | 'halls' | 'sessions'>('movies')
+  const [activeNav, setActiveNav] = useState<'sessions' | 'seats' | 'bookings' | null>(null)
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
   const seatRowAbbr = t(lang, 'seat_row_abbr')
   const seatSeatAbbr = t(lang, 'seat_seat_abbr')
+  const sessionsRef = useRef<HTMLDivElement | null>(null)
+  const seatsRef = useRef<HTMLDivElement | null>(null)
+  const bookingsRef = useRef<HTMLDivElement | null>(null)
 
   const totalPrice = useMemo(() => {
     if (!selectedSession) return 0
@@ -556,6 +560,33 @@ function App() {
       setShowAdmin(false)
     }
   }, [user?.is_admin])
+
+  useEffect(() => {
+    const entries = [
+      { key: 'sessions' as const, ref: sessionsRef },
+      { key: 'seats' as const, ref: seatsRef },
+      { key: 'bookings' as const, ref: bookingsRef },
+    ]
+
+    const observer = new IntersectionObserver(
+      (items) => {
+        const visible = items
+          .filter((item) => item.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+        const match = entries.find((entry) => entry.ref.current === visible?.target)
+        if (match) {
+          setActiveNav(match.key)
+        }
+      },
+      { rootMargin: '-20% 0px -55% 0px', threshold: [0.1, 0.3, 0.6] }
+    )
+
+    entries.forEach(({ ref }) => {
+      if (ref.current) observer.observe(ref.current)
+    })
+
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     if (showAdmin) {
@@ -706,6 +737,16 @@ function App() {
     setUser(null)
     setShowAdmin(false)
     localStorage.removeItem('kino_token')
+  }
+
+  function scrollToSection(target: 'sessions' | 'seats' | 'bookings') {
+    setActiveNav(target)
+    const map = {
+      sessions: sessionsRef,
+      seats: seatsRef,
+      bookings: bookingsRef,
+    }
+    map[target].current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   async function handleAdminMovieSubmit(event: React.FormEvent) {
@@ -885,9 +926,27 @@ function App() {
           <span className="brand__sub">FORM</span>
         </div>
         <nav className="topbar__nav">
-          <button className="ghost" type="button">{t(lang, 'nav_sessions')}</button>
-          <button className="ghost" type="button">{t(lang, 'nav_seats')}</button>
-          <button className="ghost" type="button">{t(lang, 'nav_bookings')}</button>
+          <button
+            className={activeNav === 'sessions' ? 'ghost is-active' : 'ghost'}
+            type="button"
+            onClick={() => scrollToSection('sessions')}
+          >
+            {t(lang, 'nav_sessions')}
+          </button>
+          <button
+            className={activeNav === 'seats' ? 'ghost is-active' : 'ghost'}
+            type="button"
+            onClick={() => scrollToSection('seats')}
+          >
+            {t(lang, 'nav_seats')}
+          </button>
+          <button
+            className={activeNav === 'bookings' ? 'ghost is-active' : 'ghost'}
+            type="button"
+            onClick={() => scrollToSection('bookings')}
+          >
+            {t(lang, 'nav_bookings')}
+          </button>
           {user?.is_admin && (
             <button
               className={showAdmin ? 'ghost is-active' : 'ghost'}
@@ -991,7 +1050,7 @@ function App() {
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel" ref={sessionsRef}>
             <div className="panel__header">
               <h2>{t(lang, 'section_sessions')}</h2>
               <p>{t(lang, 'section_sessions_lead')}</p>
@@ -1014,7 +1073,7 @@ function App() {
             </div>
           </div>
 
-          <div className="panel">
+          <div className="panel" ref={seatsRef}>
             <div className="panel__header">
               <h2>{t(lang, 'section_seats')}</h2>
               <p>{t(lang, 'section_seats_lead')}</p>
@@ -1062,7 +1121,7 @@ function App() {
         <aside className="sidebar">
           {flash && <div className={`flash flash--${flash.type}`}>{flash.message}</div>}
 
-          <div className="panel panel--accent">
+          <div className="panel panel--accent" ref={bookingsRef}>
             <h2>{t(lang, 'booking')}</h2>
             <div className="summary">
               <div>
