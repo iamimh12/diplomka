@@ -48,7 +48,7 @@ function formatTime(value: string) {
 function formatPrice(value: number) {
   return new Intl.NumberFormat('ru-RU', {
     style: 'currency',
-    currency: 'RUB',
+    currency: 'KZT',
     maximumFractionDigits: 0,
   }).format(value)
 }
