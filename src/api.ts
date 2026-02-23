@@ -116,6 +116,31 @@ export async function fetchMe(token: string) {
   return request<User>('/me', {}, token)
 }
 
+export async function updateProfile(token: string, payload: { name: string }) {
+  return request<User>(
+    '/me',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    },
+    token
+  )
+}
+
+export async function changePassword(
+  token: string,
+  payload: { current_password: string; new_password: string }
+) {
+  return request<{ status: string }>(
+    '/me/password',
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    },
+    token
+  )
+}
+
 export async function createBooking(token: string, payload: { session_id: number; seat_ids: number[] }) {
   return request<Booking>('/bookings', {
     method: 'POST',

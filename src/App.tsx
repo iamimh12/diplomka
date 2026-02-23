@@ -21,6 +21,8 @@ import {
   fetchSeats,
   fetchSessions,
   fetchMe,
+  updateProfile,
+  changePassword,
   loginUser,
   registerUser,
 } from './api'
@@ -82,8 +84,17 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_name: 'Имя',
     label_email: 'Email',
     label_password: 'Пароль',
+    label_nickname: 'Никнейм',
+    label_current_password: 'Текущий пароль',
+    label_new_password: 'Новый пароль',
+    label_new_password_repeat: 'Повторите пароль',
     auth_submit_login: 'Войти',
     auth_submit_register: 'Создать аккаунт',
+    button_save: 'Сохранить',
+    button_update_password: 'Обновить пароль',
+    profile_settings: 'Настройки профиля',
+    profile_security: 'Смена пароля',
+    profile_bookings: 'Ваши бронирования',
     no_bookings: 'У вас пока нет бронирований.',
     status_cancelled: 'Отменено',
     status_confirmed: 'Подтверждено',
@@ -161,6 +172,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_session_save_failed: 'Не удалось сохранить сеанс',
     flash_session_deleted: 'Сеанс удален.',
     flash_session_delete_failed: 'Не удалось удалить сеанс',
+    flash_profile_saved: 'Профиль обновлен.',
+    flash_profile_save_failed: 'Не удалось обновить профиль',
+    flash_password_updated: 'Пароль обновлен.',
+    flash_password_update_failed: 'Не удалось обновить пароль',
+    flash_password_mismatch: 'Пароли не совпадают.',
   },
   en: {
     nav_sessions: 'Sessions',
@@ -201,8 +217,17 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_name: 'Name',
     label_email: 'Email',
     label_password: 'Password',
+    label_nickname: 'Nickname',
+    label_current_password: 'Current password',
+    label_new_password: 'New password',
+    label_new_password_repeat: 'Repeat password',
     auth_submit_login: 'Sign in',
     auth_submit_register: 'Create account',
+    button_save: 'Save',
+    button_update_password: 'Update password',
+    profile_settings: 'Profile settings',
+    profile_security: 'Change password',
+    profile_bookings: 'Your bookings',
     no_bookings: 'You have no bookings yet.',
     status_cancelled: 'Cancelled',
     status_confirmed: 'Confirmed',
@@ -280,6 +305,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_session_save_failed: 'Unable to save session',
     flash_session_deleted: 'Session deleted.',
     flash_session_delete_failed: 'Unable to delete session',
+    flash_profile_saved: 'Profile updated.',
+    flash_profile_save_failed: 'Unable to update profile',
+    flash_password_updated: 'Password updated.',
+    flash_password_update_failed: 'Unable to update password',
+    flash_password_mismatch: 'Passwords do not match.',
   },
   kk: {
     nav_sessions: 'Сеанстар',
@@ -320,8 +350,17 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_name: 'Аты',
     label_email: 'Email',
     label_password: 'Құпиясөз',
+    label_nickname: 'Никнейм',
+    label_current_password: 'Ағымдағы құпиясөз',
+    label_new_password: 'Жаңа құпиясөз',
+    label_new_password_repeat: 'Құпиясөзді қайталаңыз',
     auth_submit_login: 'Кіру',
     auth_submit_register: 'Тіркелу',
+    button_save: 'Сақтау',
+    button_update_password: 'Құпиясөзді жаңарту',
+    profile_settings: 'Профиль баптаулары',
+    profile_security: 'Құпиясөзді өзгерту',
+    profile_bookings: 'Сіздің брондаулар',
     no_bookings: 'Сізде әзірге брондау жоқ.',
     status_cancelled: 'Бас тартылды',
     status_confirmed: 'Расталды',
@@ -399,6 +438,11 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_session_save_failed: 'Сеансты сақтау мүмкін емес',
     flash_session_deleted: 'Сеанс жойылды.',
     flash_session_delete_failed: 'Сеансты жою мүмкін емес',
+    flash_profile_saved: 'Профиль жаңартылды.',
+    flash_profile_save_failed: 'Профильді жаңарту мүмкін емес',
+    flash_password_updated: 'Құпиясөз жаңартылды.',
+    flash_password_update_failed: 'Құпиясөзді жаңарту мүмкін емес',
+    flash_password_mismatch: 'Құпиясөздер сәйкес келмейді.',
   },
 }
 
@@ -618,6 +662,10 @@ function App() {
   const [authEmail, setAuthEmail] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authName, setAuthName] = useState('')
+  const [profileName, setProfileName] = useState('')
+  const [profileCurrentPassword, setProfileCurrentPassword] = useState('')
+  const [profileNewPassword, setProfileNewPassword] = useState('')
+  const [profileRepeatPassword, setProfileRepeatPassword] = useState('')
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('kino_token'))
   const [user, setUser] = useState<User | null>(null)
 
@@ -716,6 +764,17 @@ function App() {
         localStorage.removeItem('kino_token')
       })
   }, [token])
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name)
+    } else {
+      setProfileName('')
+    }
+    setProfileCurrentPassword('')
+    setProfileNewPassword('')
+    setProfileRepeatPassword('')
+  }, [user])
 
   useEffect(() => {
     if (!token) return
@@ -870,6 +929,54 @@ function App() {
       setAuthPassword('')
     } catch (err) {
       const message = err instanceof Error ? err.message : t(lang, 'flash_auth_error')
+      setFlash({ type: 'error', message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleProfileUpdate(event: React.FormEvent) {
+    event.preventDefault()
+    if (!token) return
+    const nextName = profileName.trim()
+    if (!nextName) {
+      setFlash({ type: 'error', message: t(lang, 'flash_profile_save_failed') })
+      return
+    }
+    setLoading(true)
+    setFlash(null)
+    try {
+      const updated = await updateProfile(token, { name: nextName })
+      setUser(updated)
+      setFlash({ type: 'success', message: t(lang, 'flash_profile_saved') })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t(lang, 'flash_profile_save_failed')
+      setFlash({ type: 'error', message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handlePasswordChange(event: React.FormEvent) {
+    event.preventDefault()
+    if (!token) return
+    if (profileNewPassword !== profileRepeatPassword) {
+      setFlash({ type: 'error', message: t(lang, 'flash_password_mismatch') })
+      return
+    }
+    setLoading(true)
+    setFlash(null)
+    try {
+      await changePassword(token, {
+        current_password: profileCurrentPassword,
+        new_password: profileNewPassword,
+      })
+      setProfileCurrentPassword('')
+      setProfileNewPassword('')
+      setProfileRepeatPassword('')
+      setFlash({ type: 'success', message: t(lang, 'flash_password_updated') })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t(lang, 'flash_password_update_failed')
       setFlash({ type: 'error', message })
     } finally {
       setLoading(false)
@@ -1818,42 +1925,103 @@ function App() {
                 </button>
               </form>
             ) : (
-              <div className="bookings">
-                {bookings.length === 0 ? (
-                  <p className="muted">{t(lang, 'no_bookings')}</p>
-                ) : (
-                  bookings.map((booking) => (
-                    <div key={booking.id} className="booking-card">
-                      <div className="booking-card__row">
-                        <strong>
-                          {getMovieTitle(booking.session?.movie, lang) || t(lang, 'movie_fallback')}
-                        </strong>
-                        <span className={`tag ${booking.status === 'cancelled' ? 'tag--muted' : 'tag--accent'}`}>
-                          {booking.status === 'cancelled' ? t(lang, 'status_cancelled') : t(lang, 'status_confirmed')}
-                        </span>
-                      </div>
-                      <span>{booking.session ? formatTime(booking.session.start_time, locale) : ''}</span>
-                      <span>
-                        {t(lang, 'seats_prefix')}:{' '}
-                        {booking.seats?.map((seat) => `${seatRowAbbr}${seat.row}-${seatSeatAbbr}${seat.number}`).join(', ') ?? '—'}
-                      </span>
-                      <span>{formatPrice(booking.total_price, locale)}</span>
-                      <div className="booking-card__actions">
-                        <button type="button" className="ghost" onClick={() => handleShowQr(booking.id)}>
-                          {t(lang, 'qr')}
-                        </button>
-                        <button type="button" className="ghost" onClick={() => handleDownloadTicket(booking.id)}>
-                          {t(lang, 'pdf')}
-                        </button>
-                        {booking.status !== 'cancelled' && (
-                          <button type="button" className="ghost danger" onClick={() => handleCancelBooking(booking.id)}>
-                            {t(lang, 'cancel')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div className="profile">
+                <div className="profile__section">
+                  <div className="profile__header">
+                    <h3>{t(lang, 'profile_settings')}</h3>
+                  </div>
+                  <form className="auth" onSubmit={handleProfileUpdate}>
+                    <label>
+                      {t(lang, 'label_nickname')}
+                      <input value={profileName} onChange={(e) => setProfileName(e.target.value)} />
+                    </label>
+                    <label>
+                      {t(lang, 'label_email')}
+                      <input type="email" value={user.email} disabled />
+                    </label>
+                    <button className="primary" type="submit" disabled={loading}>
+                      {t(lang, 'button_save')}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="profile__section">
+                  <div className="profile__header">
+                    <h3>{t(lang, 'profile_security')}</h3>
+                  </div>
+                  <form className="auth" onSubmit={handlePasswordChange}>
+                    <label>
+                      {t(lang, 'label_current_password')}
+                      <input
+                        type="password"
+                        value={profileCurrentPassword}
+                        onChange={(e) => setProfileCurrentPassword(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      {t(lang, 'label_new_password')}
+                      <input
+                        type="password"
+                        value={profileNewPassword}
+                        onChange={(e) => setProfileNewPassword(e.target.value)}
+                      />
+                    </label>
+                    <label>
+                      {t(lang, 'label_new_password_repeat')}
+                      <input
+                        type="password"
+                        value={profileRepeatPassword}
+                        onChange={(e) => setProfileRepeatPassword(e.target.value)}
+                      />
+                    </label>
+                    <button className="primary" type="submit" disabled={loading}>
+                      {t(lang, 'button_update_password')}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="profile__section">
+                  <div className="profile__header">
+                    <h3>{t(lang, 'profile_bookings')}</h3>
+                  </div>
+                  <div className="bookings">
+                    {bookings.length === 0 ? (
+                      <p className="muted">{t(lang, 'no_bookings')}</p>
+                    ) : (
+                      bookings.map((booking) => (
+                        <div key={booking.id} className="booking-card">
+                          <div className="booking-card__row">
+                            <strong>
+                              {getMovieTitle(booking.session?.movie, lang) || t(lang, 'movie_fallback')}
+                            </strong>
+                            <span className={`tag ${booking.status === 'cancelled' ? 'tag--muted' : 'tag--accent'}`}>
+                              {booking.status === 'cancelled' ? t(lang, 'status_cancelled') : t(lang, 'status_confirmed')}
+                            </span>
+                          </div>
+                          <span>{booking.session ? formatTime(booking.session.start_time, locale) : ''}</span>
+                          <span>
+                            {t(lang, 'seats_prefix')}:{' '}
+                            {booking.seats?.map((seat) => `${seatRowAbbr}${seat.row}-${seatSeatAbbr}${seat.number}`).join(', ') ?? '—'}
+                          </span>
+                          <span>{formatPrice(booking.total_price, locale)}</span>
+                          <div className="booking-card__actions">
+                            <button type="button" className="ghost" onClick={() => handleShowQr(booking.id)}>
+                              {t(lang, 'qr')}
+                            </button>
+                            <button type="button" className="ghost" onClick={() => handleDownloadTicket(booking.id)}>
+                              {t(lang, 'pdf')}
+                            </button>
+                            {booking.status !== 'cancelled' && (
+                              <button type="button" className="ghost danger" onClick={() => handleCancelBooking(booking.id)}>
+                                {t(lang, 'cancel')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

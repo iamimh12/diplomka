@@ -509,6 +509,37 @@
   background: var(--surface-strong);
 }
 
+.auth input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.profile__section {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.profile__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile__header h3 {
+  margin: 0;
+}
+
 .auth__tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

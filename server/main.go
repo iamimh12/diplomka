@@ -116,6 +116,15 @@ type LoginRequest struct {
     Password string `json:"password"`
 }
 
+type UpdateProfileRequest struct {
+    Name string `json:"name"`
+}
+
+type ChangePasswordRequest struct {
+    CurrentPassword string `json:"current_password"`
+    NewPassword     string `json:"new_password"`
+}
+
 type BookingRequest struct {
     SessionID uint   `json:"session_id"`
     SeatIDs   []uint `json:"seat_ids"`
@@ -217,6 +226,8 @@ func main() {
         api.POST("/auth/register", registerHandler(db, cfg.JwtSecret))
         api.POST("/auth/login", loginHandler(db, cfg.JwtSecret))
         api.GET("/me", authMiddleware(cfg.JwtSecret), meHandler(db))
+        api.PATCH("/me", authMiddleware(cfg.JwtSecret), updateMeHandler(db))
+        api.PATCH("/me/password", authMiddleware(cfg.JwtSecret), changePasswordHandler(db))
 
         api.GET("/movies", listMovies(db))
         api.GET("/movies/:id", getMovie(db))
@@ -448,6 +459,77 @@ func meHandler(db *gorm.DB) gin.HandlerFunc {
             return
         }
         c.JSON(http.StatusOK, user)
+    }
+}
+
+func updateMeHandler(db *gorm.DB) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        var req UpdateProfileRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+            return
+        }
+        name := strings.TrimSpace(req.Name)
+        if name == "" {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "name is required"})
+            return
+        }
+
+        userID := c.GetUint("user_id")
+        if err := db.Model(&User{}).Where("id = ?", userID).Update("name", name).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update profile"})
+            return
+        }
+
+        var user User
+        if err := db.First(&user, userID).Error; err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+            return
+        }
+        c.JSON(http.StatusOK, user)
+    }
+}
+
+func changePasswordHandler(db *gorm.DB) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        var req ChangePasswordRequest
+        if err := c.ShouldBindJSON(&req); err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+            return
+        }
+        currentPassword := strings.TrimSpace(req.CurrentPassword)
+        newPassword := strings.TrimSpace(req.NewPassword)
+        if currentPassword == "" || newPassword == "" {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "current and new password are required"})
+            return
+        }
+        if len(newPassword) < 6 {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "password must be at least 6 characters"})
+            return
+        }
+
+        userID := c.GetUint("user_id")
+        var user User
+        if err := db.First(&user, userID).Error; err != nil {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
+            return
+        }
+        if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(currentPassword)); err != nil {
+            c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid credentials"})
+            return
+        }
+
+        hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+        if err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update password"})
+            return
+        }
+        if err := db.Model(&User{}).Where("id = ?", userID).Update("password_hash", string(hash)).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update password"})
+            return
+        }
+
+        c.JSON(http.StatusOK, gin.H{"status": "ok"})
     }
 }
 
