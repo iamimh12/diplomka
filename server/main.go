@@ -47,11 +47,19 @@ type User struct {
 type Movie struct {
     ID           uint      `gorm:"primaryKey" json:"id"`
     Title        string    `json:"title"`
+    TitleEN      string    `json:"title_en"`
+    TitleKK      string    `json:"title_kk"`
     Description  string    `json:"description"`
+    DescriptionEN string   `json:"description_en"`
+    DescriptionKK string   `json:"description_kk"`
     DurationMins int       `json:"duration_mins"`
     PosterURL    string    `json:"poster_url"`
     Country      string    `json:"country"`
+    CountryEN    string    `json:"country_en"`
+    CountryKK    string    `json:"country_kk"`
     Genres       string    `json:"genres"`
+    GenresEN     string    `json:"genres_en"`
+    GenresKK     string    `json:"genres_kk"`
     ReleaseYear  int       `json:"release_year"`
     CreatedAt    time.Time `json:"created_at"`
 }
@@ -119,11 +127,19 @@ type BookingStatusRequest struct {
 
 type MovieRequest struct {
     Title        string `json:"title"`
+    TitleEN      string `json:"title_en"`
+    TitleKK      string `json:"title_kk"`
     Description  string `json:"description"`
+    DescriptionEN string `json:"description_en"`
+    DescriptionKK string `json:"description_kk"`
     DurationMins int    `json:"duration_mins"`
     PosterURL    string `json:"poster_url"`
     Country      string `json:"country"`
+    CountryEN    string `json:"country_en"`
+    CountryKK    string `json:"country_kk"`
     Genres       string `json:"genres"`
+    GenresEN     string `json:"genres_en"`
+    GenresKK     string `json:"genres_kk"`
     ReleaseYear  int    `json:"release_year"`
 }
 
@@ -471,11 +487,19 @@ func createMovie(db *gorm.DB) gin.HandlerFunc {
         }
         movie := Movie{
             Title:        strings.TrimSpace(req.Title),
+            TitleEN:      strings.TrimSpace(req.TitleEN),
+            TitleKK:      strings.TrimSpace(req.TitleKK),
             Description:  strings.TrimSpace(req.Description),
+            DescriptionEN: strings.TrimSpace(req.DescriptionEN),
+            DescriptionKK: strings.TrimSpace(req.DescriptionKK),
             DurationMins: req.DurationMins,
             PosterURL:    strings.TrimSpace(req.PosterURL),
             Country:      strings.TrimSpace(req.Country),
+            CountryEN:    strings.TrimSpace(req.CountryEN),
+            CountryKK:    strings.TrimSpace(req.CountryKK),
             Genres:       strings.TrimSpace(req.Genres),
+            GenresEN:     strings.TrimSpace(req.GenresEN),
+            GenresKK:     strings.TrimSpace(req.GenresKK),
             ReleaseYear:  req.ReleaseYear,
         }
         if err := db.Create(&movie).Error; err != nil {
@@ -498,8 +522,20 @@ func updateMovie(db *gorm.DB) gin.HandlerFunc {
         if strings.TrimSpace(req.Title) != "" {
             updates["title"] = strings.TrimSpace(req.Title)
         }
+        if strings.TrimSpace(req.TitleEN) != "" {
+            updates["title_en"] = strings.TrimSpace(req.TitleEN)
+        }
+        if strings.TrimSpace(req.TitleKK) != "" {
+            updates["title_kk"] = strings.TrimSpace(req.TitleKK)
+        }
         if req.Description != "" {
             updates["description"] = strings.TrimSpace(req.Description)
+        }
+        if req.DescriptionEN != "" {
+            updates["description_en"] = strings.TrimSpace(req.DescriptionEN)
+        }
+        if req.DescriptionKK != "" {
+            updates["description_kk"] = strings.TrimSpace(req.DescriptionKK)
         }
         if req.DurationMins > 0 {
             updates["duration_mins"] = req.DurationMins
@@ -510,8 +546,20 @@ func updateMovie(db *gorm.DB) gin.HandlerFunc {
         if req.Country != "" {
             updates["country"] = strings.TrimSpace(req.Country)
         }
+        if req.CountryEN != "" {
+            updates["country_en"] = strings.TrimSpace(req.CountryEN)
+        }
+        if req.CountryKK != "" {
+            updates["country_kk"] = strings.TrimSpace(req.CountryKK)
+        }
         if req.Genres != "" {
             updates["genres"] = strings.TrimSpace(req.Genres)
+        }
+        if req.GenresEN != "" {
+            updates["genres_en"] = strings.TrimSpace(req.GenresEN)
+        }
+        if req.GenresKK != "" {
+            updates["genres_kk"] = strings.TrimSpace(req.GenresKK)
         }
         if req.ReleaseYear > 0 {
             updates["release_year"] = req.ReleaseYear
@@ -1117,29 +1165,53 @@ func seedData(db *gorm.DB) error {
     movies := []Movie{
         {
             Title:        "Свет над городом",
+            TitleEN:      "Light Over the City",
+            TitleKK:      "Қала үстіндегі жарық",
             Description:  "Драматичная история о выборе между карьерой и любовью на фоне ночного мегаполиса.",
+            DescriptionEN: "A dramatic story about choosing between career and love against the backdrop of a sleepless metropolis.",
+            DescriptionKK: "Мегаполистің түнгі тынысы аясында мансап пен махаббат арасындағы таңдауды баяндайтын драмалық оқиға.",
             DurationMins: 114,
             PosterURL:    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
             Country:      "Казахстан",
+            CountryEN:    "Kazakhstan",
+            CountryKK:    "Қазақстан",
             Genres:       "Драма, Романтика",
+            GenresEN:     "Drama, Romance",
+            GenresKK:     "Драма, Романтика",
             ReleaseYear:  2023,
         },
         {
             Title:        "Предел орбиты",
+            TitleEN:      "Orbit's Edge",
+            TitleKK:      "Орбита шегі",
             Description:  "Научно-фантастический триллер о первой экспедиции к далекой экзопланете.",
+            DescriptionEN: "A sci-fi thriller about the first expedition to a distant exoplanet.",
+            DescriptionKK: "Алыс экзопланетаға алғашқы экспедиция туралы ғылыми-фантастикалық триллер.",
             DurationMins: 128,
             PosterURL:    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=600&q=80",
             Country:      "США",
+            CountryEN:    "USA",
+            CountryKK:    "АҚШ",
             Genres:       "Фантастика, Триллер",
+            GenresEN:     "Sci-fi, Thriller",
+            GenresKK:     "Ғылыми фантастика, Триллер",
             ReleaseYear:  2024,
         },
         {
             Title:        "Лунный сон",
+            TitleEN:      "Moon Dream",
+            TitleKK:      "Айлы түс",
             Description:  "Лирическое путешествие по воспоминаниям, где музыка меняет ход времени.",
+            DescriptionEN: "A lyrical journey through memories where music bends time.",
+            DescriptionKK: "Музыка уақытты өзгерткен естеліктер арқылы лирикалық саяхат.",
             DurationMins: 98,
             PosterURL:    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
             Country:      "Франция",
+            CountryEN:    "France",
+            CountryKK:    "Франция",
             Genres:       "Драма, Артхаус",
+            GenresEN:     "Drama, Arthouse",
+            GenresKK:     "Драма, Артхаус",
             ReleaseYear:  2022,
         },
     }

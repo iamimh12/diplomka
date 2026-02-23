@@ -97,10 +97,18 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     admin_halls: 'Залы',
     admin_sessions: 'Сеансы',
     placeholder_title: 'Название',
+    placeholder_title_en: 'Название (EN)',
+    placeholder_title_kk: 'Название (KK)',
     placeholder_description: 'Описание',
+    placeholder_description_en: 'Описание (EN)',
+    placeholder_description_kk: 'Описание (KK)',
     placeholder_duration: 'Длительность (мин)',
     placeholder_country: 'Страна',
+    placeholder_country_en: 'Страна (EN)',
+    placeholder_country_kk: 'Страна (KK)',
     placeholder_genres: 'Жанры',
+    placeholder_genres_en: 'Жанры (EN)',
+    placeholder_genres_kk: 'Жанры (KK)',
     placeholder_year: 'Год',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Ряды',
@@ -208,10 +216,18 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     admin_halls: 'Halls',
     admin_sessions: 'Sessions',
     placeholder_title: 'Title',
+    placeholder_title_en: 'Title (EN)',
+    placeholder_title_kk: 'Title (KK)',
     placeholder_description: 'Description',
+    placeholder_description_en: 'Description (EN)',
+    placeholder_description_kk: 'Description (KK)',
     placeholder_duration: 'Duration (min)',
     placeholder_country: 'Country',
+    placeholder_country_en: 'Country (EN)',
+    placeholder_country_kk: 'Country (KK)',
     placeholder_genres: 'Genres',
+    placeholder_genres_en: 'Genres (EN)',
+    placeholder_genres_kk: 'Genres (KK)',
     placeholder_year: 'Year',
     placeholder_poster: 'Poster URL',
     placeholder_rows: 'Rows',
@@ -319,10 +335,18 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     admin_halls: 'Залдар',
     admin_sessions: 'Сеанстар',
     placeholder_title: 'Атауы',
+    placeholder_title_en: 'Атауы (EN)',
+    placeholder_title_kk: 'Атауы (KK)',
     placeholder_description: 'Сипаттама',
+    placeholder_description_en: 'Сипаттама (EN)',
+    placeholder_description_kk: 'Сипаттама (KK)',
     placeholder_duration: 'Ұзақтығы (мин)',
     placeholder_country: 'Елі',
+    placeholder_country_en: 'Елі (EN)',
+    placeholder_country_kk: 'Елі (KK)',
     placeholder_genres: 'Жанрлар',
+    placeholder_genres_en: 'Жанрлар (EN)',
+    placeholder_genres_kk: 'Жанрлар (KK)',
     placeholder_year: 'Жылы',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Қатарлар',
@@ -378,12 +402,129 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
   },
 }
 
+const GENRE_ALIASES: Record<string, string> = {
+  драма: 'drama',
+  drama: 'drama',
+  романтика: 'romance',
+  romance: 'romance',
+  мелодрама: 'romance',
+  фантастика: 'sci_fi',
+  'sci-fi': 'sci_fi',
+  'sci fi': 'sci_fi',
+  'science fiction': 'sci_fi',
+  'ғылыми фантастика': 'sci_fi',
+  триллер: 'thriller',
+  thriller: 'thriller',
+  артхаус: 'arthouse',
+  arthouse: 'arthouse',
+  action: 'action',
+  боевик: 'action',
+}
+
+const GENRE_LABELS: Record<string, Record<Lang, string>> = {
+  drama: { ru: 'Драма', en: 'Drama', kk: 'Драма' },
+  romance: { ru: 'Романтика', en: 'Romance', kk: 'Романтика' },
+  sci_fi: { ru: 'Фантастика', en: 'Sci-fi', kk: 'Ғылыми фантастика' },
+  thriller: { ru: 'Триллер', en: 'Thriller', kk: 'Триллер' },
+  arthouse: { ru: 'Артхаус', en: 'Arthouse', kk: 'Артхаус' },
+  action: { ru: 'Боевик', en: 'Action', kk: 'Экшн' },
+}
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  казахстан: 'kazakhstan',
+  'қазақстан': 'kazakhstan',
+  kazakhstan: 'kazakhstan',
+  сша: 'usa',
+  usa: 'usa',
+  'united states': 'usa',
+  'united states of america': 'usa',
+  'ақш': 'usa',
+  франция: 'france',
+  france: 'france',
+}
+
+const COUNTRY_LABELS: Record<string, Record<Lang, string>> = {
+  kazakhstan: { ru: 'Казахстан', en: 'Kazakhstan', kk: 'Қазақстан' },
+  usa: { ru: 'США', en: 'USA', kk: 'АҚШ' },
+  france: { ru: 'Франция', en: 'France', kk: 'Франция' },
+}
+
 function getLocale(lang: Lang) {
   return LOCALES[lang] ?? LOCALES.ru
 }
 
 function t(lang: Lang, key: string) {
   return TRANSLATIONS[lang]?.[key] ?? TRANSLATIONS.ru[key] ?? key
+}
+
+function normalizeGenreKey(raw: string) {
+  const cleaned = raw.trim().toLowerCase()
+  return GENRE_ALIASES[cleaned] ?? cleaned
+}
+
+function toTitleCase(value: string) {
+  return value
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function getGenreLabel(key: string, lang: Lang, fallback: string) {
+  const label = GENRE_LABELS[key]?.[lang]
+  return label ?? toTitleCase(fallback)
+}
+
+function getGenreKeys(genres?: string) {
+  if (!genres) return []
+  return genres
+    .split(',')
+    .map((genre) => genre.trim())
+    .filter(Boolean)
+    .map((raw) => ({ raw, key: normalizeGenreKey(raw) }))
+}
+
+function getLocalizedGenres(movie: Movie, lang: Lang) {
+  if (lang === 'en' && movie.genres_en) return movie.genres_en
+  if (lang === 'kk' && movie.genres_kk) return movie.genres_kk
+  return movie.genres ?? ''
+}
+
+function localizeGenres(movie: Movie, lang: Lang) {
+  const source = getLocalizedGenres(movie, lang)
+  return getGenreKeys(source).map(({ key, raw }) => getGenreLabel(key, lang, raw))
+}
+
+function localizeCountry(country: string | undefined, lang: Lang) {
+  if (!country) return ''
+  const key = COUNTRY_ALIASES[country.trim().toLowerCase()] ?? country.trim().toLowerCase()
+  return COUNTRY_LABELS[key]?.[lang] ?? country
+}
+
+function getMovieDisplay(movie: Movie, lang: Lang) {
+  if (lang === 'ru') {
+    return {
+      title: movie.title,
+      description: movie.description,
+      country: movie.country ?? '',
+      genres: movie.genres ?? '',
+    }
+  }
+  const localizedTitle = lang === 'en' ? movie.title_en : movie.title_kk
+  const localizedDescription = lang === 'en' ? movie.description_en : movie.description_kk
+  const localizedCountry = lang === 'en' ? movie.country_en : movie.country_kk
+  const localizedGenres = lang === 'en' ? movie.genres_en : movie.genres_kk
+  return {
+    title: localizedTitle?.trim() ? localizedTitle.trim() : movie.title,
+    description: localizedDescription?.trim() ? localizedDescription.trim() : movie.description,
+    country: localizedCountry?.trim() ? localizedCountry.trim() : localizeCountry(movie.country, lang),
+    genres: localizedGenres?.trim() ? localizedGenres.trim() : localizeGenres(movie, lang).join(', '),
+  }
+}
+
+function getMovieTitle(movie: Movie | null | undefined, lang: Lang) {
+  if (!movie) return ''
+  return getMovieDisplay(movie, lang).title
 }
 
 function pluralRu(value: number, one: string, few: string, many: string) {
@@ -484,11 +625,19 @@ function App() {
   const [adminSessions, setAdminSessions] = useState<Session[]>([])
   const [adminMovieForm, setAdminMovieForm] = useState({
     title: '',
+    titleEn: '',
+    titleKk: '',
     description: '',
+    descriptionEn: '',
+    descriptionKk: '',
     duration: 90,
     poster: '',
     country: '',
+    countryEn: '',
+    countryKk: '',
     genres: '',
+    genresEn: '',
+    genresKk: '',
     year: new Date().getFullYear(),
   })
   const [adminHallForm, setAdminHallForm] = useState({ name: '', rows: 8, cols: 12 })
@@ -498,7 +647,6 @@ function App() {
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
   const [showAdmin, setShowAdmin] = useState(false)
   const [adminTab, setAdminTab] = useState<'movies' | 'halls' | 'sessions'>('movies')
-  const [activeNav, setActiveNav] = useState<'sessions' | 'seats' | 'bookings' | null>(null)
   const [showProfile, setShowProfile] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
   const [showMovie, setShowMovie] = useState(false)
@@ -511,8 +659,8 @@ function App() {
   const seatRowAbbr = t(lang, 'seat_row_abbr')
   const seatSeatAbbr = t(lang, 'seat_seat_abbr')
   const sessionsRef = useRef<HTMLDivElement | null>(null)
-  const seatsRef = useRef<HTMLDivElement | null>(null)
   const moviesScrollRef = useRef<HTMLDivElement | null>(null)
+  const sessionsScrollRef = useRef<HTMLDivElement | null>(null)
 
   const totalPrice = useMemo(() => {
     if (!selectedSession) return 0
@@ -615,32 +763,6 @@ function App() {
   }, [user?.is_admin])
 
   useEffect(() => {
-    const entries = [
-      { key: 'sessions' as const, ref: sessionsRef },
-      { key: 'seats' as const, ref: seatsRef },
-    ]
-
-    const observer = new IntersectionObserver(
-      (items) => {
-        const visible = items
-          .filter((item) => item.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        const match = entries.find((entry) => entry.ref.current === visible?.target)
-        if (match) {
-          setActiveNav(match.key)
-        }
-      },
-      { rootMargin: '-20% 0px -55% 0px', threshold: [0.1, 0.3, 0.6] }
-    )
-
-    entries.forEach(({ ref }) => {
-      if (ref.current) observer.observe(ref.current)
-    })
-
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
     if (showAdmin) {
       setAdminTab('movies')
     }
@@ -670,32 +792,40 @@ function App() {
     return sessions.filter((session) => session.movie_id === activeMovie.id || session.movie?.id === activeMovie.id)
   }, [activeMovie, sessions])
 
-  const genres = useMemo(() => {
-    const set = new Set<string>()
+  const activeMovieDisplay = useMemo(() => {
+    return activeMovie ? getMovieDisplay(activeMovie, lang) : null
+  }, [activeMovie, lang])
+
+  const activeMovieGenres = useMemo(() => {
+    if (!activeMovie) return ''
+    return localizeGenres(activeMovie, lang).join(', ')
+  }, [activeMovie, lang])
+
+  const genreOptions = useMemo(() => {
+    const map = new Map<string, string>()
     movies.forEach((movie) => {
-      movie.genres
-        ?.split(',')
-        .map((genre) => genre.trim())
-        .filter(Boolean)
-        .forEach((genre) => set.add(genre))
+      const source = getLocalizedGenres(movie, lang)
+      getGenreKeys(source).forEach(({ key, raw }) => {
+        map.set(key, getGenreLabel(key, lang, raw))
+      })
     })
-    return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [movies])
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label))
+  }, [movies, lang])
 
   const filteredMovies = useMemo(() => {
     const query = movieQuery.trim().toLowerCase()
     return movies.filter((movie) => {
       if (genreFilter !== 'all') {
-        const movieGenres = movie.genres
-          ?.split(',')
-          .map((genre) => genre.trim().toLowerCase())
-          .filter(Boolean)
-        if (!movieGenres?.includes(genreFilter.toLowerCase())) return false
+        const movieGenreKeys = getGenreKeys(getLocalizedGenres(movie, lang)).map(({ key }) => key)
+        if (!movieGenreKeys.includes(genreFilter)) return false
       }
       if (!query) return true
-      return movie.title.toLowerCase().includes(query)
+      const localizedTitle = getMovieTitle(movie, lang).toLowerCase()
+      return localizedTitle.includes(query)
     })
-  }, [genreFilter, movieQuery, movies])
+  }, [genreFilter, movieQuery, movies, lang])
 
   function toggleSeat(seatId: number) {
     if (bookedSeatIds.includes(seatId)) return
@@ -840,21 +970,15 @@ function App() {
     localStorage.removeItem('kino_token')
   }
 
-  function scrollToSection(target: 'sessions' | 'seats' | 'bookings') {
-    setActiveNav(target)
-    const map = {
-      sessions: sessionsRef,
-      seats: seatsRef,
-    }
-    if (target === 'bookings') {
-      setShowBooking(true)
-      return
-    }
-    map[target].current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
   function scrollMovies(direction: 'prev' | 'next') {
     const container = moviesScrollRef.current
+    if (!container) return
+    const offset = container.clientWidth * 0.8
+    container.scrollBy({ left: direction === 'prev' ? -offset : offset, behavior: 'smooth' })
+  }
+
+  function scrollSessions(direction: 'prev' | 'next') {
+    const container = sessionsScrollRef.current
     if (!container) return
     const offset = container.clientWidth * 0.8
     container.scrollBy({ left: direction === 'prev' ? -offset : offset, behavior: 'smooth' })
@@ -867,6 +991,12 @@ function App() {
     moviesScrollRef.current.scrollBy({ left: event.deltaY, behavior: 'smooth' })
   }
 
+  function handleSessionWheel(event: React.WheelEvent<HTMLDivElement>) {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+    event.preventDefault()
+    event.currentTarget.scrollBy({ left: event.deltaY, behavior: 'smooth' })
+  }
+
   async function handleAdminMovieSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (!token) return
@@ -875,21 +1005,37 @@ function App() {
       if (editingMovieId) {
         await adminUpdateMovie(token, editingMovieId, {
           title: adminMovieForm.title,
+          title_en: adminMovieForm.titleEn,
+          title_kk: adminMovieForm.titleKk,
           description: adminMovieForm.description,
+          description_en: adminMovieForm.descriptionEn,
+          description_kk: adminMovieForm.descriptionKk,
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
           country: adminMovieForm.country,
+          country_en: adminMovieForm.countryEn,
+          country_kk: adminMovieForm.countryKk,
           genres: adminMovieForm.genres,
+          genres_en: adminMovieForm.genresEn,
+          genres_kk: adminMovieForm.genresKk,
           release_year: adminMovieForm.year,
         })
       } else {
         await adminCreateMovie(token, {
           title: adminMovieForm.title,
+          title_en: adminMovieForm.titleEn,
+          title_kk: adminMovieForm.titleKk,
           description: adminMovieForm.description,
+          description_en: adminMovieForm.descriptionEn,
+          description_kk: adminMovieForm.descriptionKk,
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
           country: adminMovieForm.country,
+          country_en: adminMovieForm.countryEn,
+          country_kk: adminMovieForm.countryKk,
           genres: adminMovieForm.genres,
+          genres_en: adminMovieForm.genresEn,
+          genres_kk: adminMovieForm.genresKk,
           release_year: adminMovieForm.year,
         })
       }
@@ -897,11 +1043,19 @@ function App() {
       setMovies(data)
       setAdminMovieForm({
         title: '',
+        titleEn: '',
+        titleKk: '',
         description: '',
+        descriptionEn: '',
+        descriptionKk: '',
         duration: 90,
         poster: '',
         country: '',
+        countryEn: '',
+        countryKk: '',
         genres: '',
+        genresEn: '',
+        genresKk: '',
         year: new Date().getFullYear(),
       })
       setEditingMovieId(null)
@@ -1030,11 +1184,19 @@ function App() {
     setEditingMovieId(movie.id)
     setAdminMovieForm({
       title: movie.title,
+      titleEn: movie.title_en ?? '',
+      titleKk: movie.title_kk ?? '',
       description: movie.description,
+      descriptionEn: movie.description_en ?? '',
+      descriptionKk: movie.description_kk ?? '',
       duration: movie.duration_mins,
       poster: movie.poster_url,
       country: movie.country ?? '',
+      countryEn: movie.country_en ?? '',
+      countryKk: movie.country_kk ?? '',
       genres: movie.genres ?? '',
+      genresEn: movie.genres_en ?? '',
+      genresKk: movie.genres_kk ?? '',
       year: movie.release_year ?? new Date().getFullYear(),
     })
   }
@@ -1060,29 +1222,8 @@ function App() {
           <span className="brand__label">KINO</span>
           <span className="brand__sub">FORM</span>
         </button>
-        <nav className="topbar__nav">
-          <button
-            className={activeNav === 'sessions' ? 'ghost is-active' : 'ghost'}
-            type="button"
-            onClick={() => scrollToSection('sessions')}
-          >
-            {t(lang, 'nav_sessions')}
-          </button>
-          <button
-            className={activeNav === 'seats' ? 'ghost is-active' : 'ghost'}
-            type="button"
-            onClick={() => scrollToSection('seats')}
-          >
-            {t(lang, 'nav_seats')}
-          </button>
-          <button
-            className={activeNav === 'bookings' ? 'ghost is-active' : 'ghost'}
-            type="button"
-            onClick={() => scrollToSection('bookings')}
-          >
-            {t(lang, 'nav_bookings')}
-          </button>
-          {user?.is_admin && (
+        {user?.is_admin && (
+          <nav className="topbar__nav">
             <button
               className={showAdmin ? 'ghost is-active' : 'ghost'}
               type="button"
@@ -1090,8 +1231,8 @@ function App() {
             >
               {t(lang, 'nav_admin')}
             </button>
-          )}
-        </nav>
+          </nav>
+        )}
         <div className="topbar__controls">
           <label className="control">
             <span>{t(lang, 'language')}</span>
@@ -1168,9 +1309,9 @@ function App() {
                   <span>{t(lang, 'filter_genre')}</span>
                   <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)}>
                     <option value="all">{t(lang, 'filter_all')}</option>
-                    {genres.map((genre) => (
-                      <option key={genre} value={genre}>
-                        {genre}
+                    {genreOptions.map((genre) => (
+                      <option key={genre.value} value={genre.value}>
+                        {genre.label}
                       </option>
                     ))}
                   </select>
@@ -1184,38 +1325,42 @@ function App() {
               </div>
             </div>
             <div className="movie-grid" ref={moviesScrollRef} onWheel={handleMovieWheel}>
-              {filteredMovies.map((movie) => (
-                <button
-                  type="button"
-                  key={movie.id}
-          className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
-          onClick={() => {
-            setSelectedMovie(movie)
-            setSelectedSession(null)
-            setActiveMovie(movie)
-            setShowMovie(true)
-          }}
-        >
-          <img src={movie.poster_url} alt={movie.title} />
-                  <div className="movie-card__body">
-                    <h3>{movie.title}</h3>
-                    <p>{movie.description}</p>
-                    <div className="movie-card__meta">
-                      <span>{movie.release_year ?? '—'}</span>
-                      <span>{formatDuration(movie.duration_mins, lang)}</span>
-                    </div>
-                    {movie.genres && (
-                      <div className="movie-card__genres">
-                        {movie.genres.split(',').map((genre) => (
-                          <span key={`${movie.id}-${genre.trim()}`} className="chip">
-                            {genre.trim()}
-                          </span>
-                        ))}
+              {filteredMovies.map((movie) => {
+                const display = getMovieDisplay(movie, lang)
+                const genres = localizeGenres(movie, lang)
+                return (
+                  <button
+                    type="button"
+                    key={movie.id}
+                    className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
+                    onClick={() => {
+                      setSelectedMovie(movie)
+                      setSelectedSession(null)
+                      setActiveMovie(movie)
+                      setShowMovie(true)
+                    }}
+                  >
+                    <img src={movie.poster_url} alt={display.title} />
+                    <div className="movie-card__body">
+                      <h3>{display.title}</h3>
+                      <p>{display.description}</p>
+                      <div className="movie-card__meta">
+                        <span>{movie.release_year ?? '—'}</span>
+                        <span>{formatDuration(movie.duration_mins, lang)}</span>
                       </div>
-                    )}
-                  </div>
-                </button>
-              ))}
+                      {genres.length > 0 && (
+                        <div className="movie-card__genres">
+                          {genres.map((genre) => (
+                            <span key={`${movie.id}-${genre}`} className="chip">
+                              {genre}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -1224,7 +1369,15 @@ function App() {
               <h2>{t(lang, 'section_sessions')}</h2>
               <p>{t(lang, 'section_sessions_lead')}</p>
             </div>
-            <div className="session-grid">
+            <div className="panel__actions panel__actions--inline">
+              <button type="button" className="ghost" onClick={() => scrollSessions('prev')}>
+                {t(lang, 'scroll_prev')}
+              </button>
+              <button type="button" className="ghost" onClick={() => scrollSessions('next')}>
+                {t(lang, 'scroll_next')}
+              </button>
+            </div>
+            <div className="session-grid" ref={sessionsScrollRef} onWheel={handleSessionWheel}>
               {sessions.map((session) => (
                 <button
                   type="button"
@@ -1233,7 +1386,9 @@ function App() {
                   onClick={() => setSelectedSession(session)}
                 >
                   <div>
-                    <p className="session-card__title">{session.movie?.title ?? selectedMovie?.title}</p>
+                    <p className="session-card__title">
+                      {getMovieTitle(session.movie ?? selectedMovie, lang) || t(lang, 'session_fallback')}
+                    </p>
                     <span>{formatTime(session.start_time, locale)}</span>
                   </div>
                   <strong>{formatPrice(session.base_price, locale)}</strong>
@@ -1242,59 +1397,6 @@ function App() {
             </div>
           </div>
 
-          <div className="panel" ref={seatsRef}>
-            <div className="panel__header">
-              <h2>{t(lang, 'section_seats')}</h2>
-              <p>{t(lang, 'section_seats_lead')}</p>
-            </div>
-            <div className="panel__actions">
-              <button
-                className="primary"
-                type="button"
-                onClick={() => setShowBooking(true)}
-                disabled={!selectedSession || selectedSeatIds.length === 0 || loading}
-              >
-                {t(lang, 'booking_submit')}
-              </button>
-            </div>
-            {selectedSession ? (
-              <div className="seats">
-                <div className="screen">{t(lang, 'screen')}</div>
-                <div className="seat-grid">
-                  {groupedSeats.map(([row, rowSeats]) => (
-                    <div key={row} className="seat-row">
-                      <span className="seat-row__label">{row}</span>
-                      <div className="seat-row__cells">
-                        {rowSeats.map((seat) => {
-                          const isBooked = bookedSeatIds.includes(seat.id)
-                          const isSelected = selectedSeatIds.includes(seat.id)
-                          return (
-                            <button
-                              type="button"
-                              key={seat.id}
-                              className={
-                                isBooked
-                                  ? 'seat is-booked'
-                                  : isSelected
-                                  ? 'seat is-selected'
-                                  : 'seat'
-                              }
-                              onClick={() => toggleSeat(seat.id)}
-                              disabled={isBooked}
-                            >
-                              {seat.number}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="muted">{t(lang, 'select_session_hint')}</p>
-            )}
-          </div>
         </section>
 
         <aside className="sidebar">
@@ -1354,6 +1456,26 @@ function App() {
                     onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, description: e.target.value }))}
                   />
                   <input
+                    placeholder={t(lang, 'placeholder_title_en')}
+                    value={adminMovieForm.titleEn}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, titleEn: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_description_en')}
+                    value={adminMovieForm.descriptionEn}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, descriptionEn: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_title_kk')}
+                    value={adminMovieForm.titleKk}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, titleKk: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_description_kk')}
+                    value={adminMovieForm.descriptionKk}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, descriptionKk: e.target.value }))}
+                  />
+                  <input
                     placeholder={t(lang, 'placeholder_duration')}
                     type="number"
                     value={adminMovieForm.duration}
@@ -1368,6 +1490,26 @@ function App() {
                     placeholder={t(lang, 'placeholder_genres')}
                     value={adminMovieForm.genres}
                     onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, genres: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_country_en')}
+                    value={adminMovieForm.countryEn}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, countryEn: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_genres_en')}
+                    value={adminMovieForm.genresEn}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, genresEn: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_country_kk')}
+                    value={adminMovieForm.countryKk}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, countryKk: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_genres_kk')}
+                    value={adminMovieForm.genresKk}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, genresKk: e.target.value }))}
                   />
                   <input
                     placeholder={t(lang, 'placeholder_year')}
@@ -1551,7 +1693,7 @@ function App() {
             <div className="summary">
               <div>
                 <span>{t(lang, 'booking_movie')}</span>
-                <strong>{selectedSession?.movie?.title ?? selectedMovie?.title ?? '—'}</strong>
+                <strong>{getMovieTitle(selectedSession?.movie ?? selectedMovie, lang) || '—'}</strong>
               </div>
               <div>
                 <span>{t(lang, 'booking_time')}</span>
@@ -1569,7 +1711,7 @@ function App() {
             {activeMovie && movieSessions.length > 0 && (
               <div className="movie-modal__sessions">
                 <h3>{t(lang, 'section_sessions')}</h3>
-                <div className="session-grid">
+                <div className="session-grid" onWheel={handleSessionWheel}>
                   {movieSessions.map((session) => (
                     <button
                       type="button"
@@ -1578,7 +1720,9 @@ function App() {
                       onClick={() => setSelectedSession(session)}
                     >
                       <div>
-                        <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
+                        <p className="session-card__title">
+                          {getMovieTitle(session.movie ?? activeMovie, lang) || t(lang, 'session_fallback')}
+                        </p>
                         <span>{formatTime(session.start_time, locale)}</span>
                       </div>
                       <strong>{formatPrice(session.base_price, locale)}</strong>
@@ -1681,7 +1825,9 @@ function App() {
                   bookings.map((booking) => (
                     <div key={booking.id} className="booking-card">
                       <div className="booking-card__row">
-                        <strong>{booking.session?.movie?.title ?? t(lang, 'movie_fallback')}</strong>
+                        <strong>
+                          {getMovieTitle(booking.session?.movie, lang) || t(lang, 'movie_fallback')}
+                        </strong>
                         <span className={`tag ${booking.status === 'cancelled' ? 'tag--muted' : 'tag--accent'}`}>
                           {booking.status === 'cancelled' ? t(lang, 'status_cancelled') : t(lang, 'status_confirmed')}
                         </span>
@@ -1719,7 +1865,7 @@ function App() {
           <div className="modal__card modal__card--movie" onClick={(e) => e.stopPropagation()}>
             <div className="admin__header">
               <div>
-                <h2>{activeMovie.title}</h2>
+                <h2>{activeMovieDisplay?.title ?? activeMovie.title}</h2>
                 <p>{formatDuration(activeMovie.duration_mins, lang)}</p>
               </div>
               <button className="ghost" type="button" onClick={() => setShowMovie(false)}>
@@ -1728,22 +1874,22 @@ function App() {
             </div>
             <div className="movie-modal">
               <div className="movie-modal__poster">
-                <img src={activeMovie.poster_url} alt={activeMovie.title} />
+                <img src={activeMovie.poster_url} alt={activeMovieDisplay?.title ?? activeMovie.title} />
               </div>
               <div className="movie-modal__info">
                 <div className="movie-modal__meta">
                   <span>{t(lang, 'label_country')}</span>
-                  <strong>{activeMovie.country || '—'}</strong>
+                  <strong>{activeMovieDisplay?.country || '—'}</strong>
                 </div>
                 <div className="movie-modal__meta">
                   <span>{t(lang, 'label_genres')}</span>
-                  <strong>{activeMovie.genres || '—'}</strong>
+                  <strong>{activeMovieGenres || '—'}</strong>
                 </div>
                 <div className="movie-modal__meta">
                   <span>{t(lang, 'label_year')}</span>
                   <strong>{activeMovie.release_year ?? '—'}</strong>
                 </div>
-                <p className="movie-modal__description">{activeMovie.description}</p>
+                <p className="movie-modal__description">{activeMovieDisplay?.description ?? activeMovie.description}</p>
                 <div className="movie-modal__actions">
                   <button
                     className="primary"
@@ -1753,16 +1899,6 @@ function App() {
                   >
                     {t(lang, 'booking_submit')}
                   </button>
-                  <button
-                    className="ghost"
-                    type="button"
-                    onClick={() => {
-                      setShowMovie(false)
-                      scrollToSection('seats')
-                    }}
-                  >
-                    {t(lang, 'go_to_seats')}
-                  </button>
                 </div>
               </div>
             </div>
@@ -1771,7 +1907,7 @@ function App() {
               {movieSessions.length === 0 ? (
                 <p className="muted">{t(lang, 'no_sessions')}</p>
               ) : (
-                <div className="session-grid">
+                <div className="session-grid" onWheel={handleSessionWheel}>
                   {movieSessions.map((session) => (
                     <button
                       type="button"
@@ -1782,7 +1918,9 @@ function App() {
                       }}
                     >
                       <div>
-                        <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
+                        <p className="session-card__title">
+                          {getMovieTitle(session.movie ?? activeMovie, lang) || t(lang, 'session_fallback')}
+                        </p>
                         <span>{formatTime(session.start_time, locale)}</span>
                       </div>
                       <strong>{formatPrice(session.base_price, locale)}</strong>

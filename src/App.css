@@ -352,8 +352,20 @@
 .session-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-top: 16px;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 1fr);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-right: 6px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+}
+
+.session-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .session-card {
@@ -367,6 +379,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: var(--ink);
+  scroll-snap-align: start;
 }
 
 .session-card__title {

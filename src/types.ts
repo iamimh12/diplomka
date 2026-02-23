@@ -8,11 +8,19 @@
 export type Movie = {
   id: number
   title: string
+  title_en?: string
+  title_kk?: string
   description: string
+  description_en?: string
+  description_kk?: string
   duration_mins: number
   poster_url: string
   country?: string
+  country_en?: string
+  country_kk?: string
   genres?: string
+  genres_en?: string
+  genres_kk?: string
   release_year?: number
 }
 
