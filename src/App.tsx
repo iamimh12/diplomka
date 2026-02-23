@@ -119,6 +119,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_seat_abbr: 'М',
     label_country: 'Страна',
     go_to_seats: 'К местам',
+    scroll_prev: 'Назад',
+    scroll_next: 'Вперёд',
+    no_sessions: 'Нет сеансов для выбранного фильма.',
     flash_account_created: 'Аккаунт создан.',
     flash_logged_in: 'Вы вошли в профиль.',
     flash_auth_error: 'Ошибка авторизации',
@@ -220,6 +223,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_seat_abbr: 'S',
     label_country: 'Country',
     go_to_seats: 'Go to seats',
+    scroll_prev: 'Prev',
+    scroll_next: 'Next',
+    no_sessions: 'No sessions for the selected movie.',
     flash_account_created: 'Account created.',
     flash_logged_in: 'Signed in.',
     flash_auth_error: 'Authorization error',
@@ -321,6 +327,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_seat_abbr: 'О',
     label_country: 'Елі',
     go_to_seats: 'Орындарға өту',
+    scroll_prev: 'Артқа',
+    scroll_next: 'Алға',
+    no_sessions: 'Таңдалған фильмге сеанс жоқ.',
     flash_account_created: 'Аккаунт құрылды.',
     flash_logged_in: 'Профильге кірдіңіз.',
     flash_auth_error: 'Авторизация қатесі',
@@ -478,6 +487,7 @@ function App() {
   const seatSeatAbbr = t(lang, 'seat_seat_abbr')
   const sessionsRef = useRef<HTMLDivElement | null>(null)
   const seatsRef = useRef<HTMLDivElement | null>(null)
+  const moviesScrollRef = useRef<HTMLDivElement | null>(null)
 
   const totalPrice = useMemo(() => {
     if (!selectedSession) return 0
@@ -630,7 +640,10 @@ function App() {
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0])
   }, [seats])
 
-  const nextSessions = useMemo(() => sessions.slice(0, 6), [sessions])
+  const movieSessions = useMemo(() => {
+    if (!activeMovie) return []
+    return sessions.filter((session) => session.movie_id === activeMovie.id || session.movie?.id === activeMovie.id)
+  }, [activeMovie, sessions])
 
   function toggleSeat(seatId: number) {
     if (bookedSeatIds.includes(seatId)) return
@@ -769,6 +782,20 @@ function App() {
       return
     }
     map[target].current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function scrollMovies(direction: 'prev' | 'next') {
+    const container = moviesScrollRef.current
+    if (!container) return
+    const offset = container.clientWidth * 0.8
+    container.scrollBy({ left: direction === 'prev' ? -offset : offset, behavior: 'smooth' })
+  }
+
+  function handleMovieWheel(event: React.WheelEvent<HTMLDivElement>) {
+    if (!moviesScrollRef.current) return
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return
+    event.preventDefault()
+    moviesScrollRef.current.scrollBy({ left: event.deltaY, behavior: 'smooth' })
   }
 
   async function handleAdminMovieSubmit(event: React.FormEvent) {
@@ -1039,18 +1066,6 @@ function App() {
             </div>
           </div>
         </div>
-        <div className="hero__card">
-          <h2>{t(lang, 'quick_access')}</h2>
-          <p>{t(lang, 'quick_access_lead')}</p>
-          <div className="hero__stats">
-            {nextSessions.map((session) => (
-              <div key={session.id} className="session-pill" onClick={() => setSelectedSession(session)}>
-                <span>{session.movie?.title ?? t(lang, 'session_fallback')}</span>
-                <strong>{formatTime(session.start_time, locale)}</strong>
-              </div>
-            ))}
-          </div>
-        </div>
       </section>
 
       <main className="layout">
@@ -1059,11 +1074,19 @@ function App() {
             <div className="panel__header">
               <h2>{t(lang, 'section_movies')}</h2>
               <p>{t(lang, 'section_movies_lead')}</p>
+              <div className="panel__actions panel__actions--inline">
+                <button type="button" className="ghost" onClick={() => scrollMovies('prev')}>
+                  {t(lang, 'scroll_prev')}
+                </button>
+                <button type="button" className="ghost" onClick={() => scrollMovies('next')}>
+                  {t(lang, 'scroll_next')}
+                </button>
+              </div>
             </div>
-    <div className="movie-grid">
-      {movies.map((movie) => (
-        <button
-          type="button"
+            <div className="movie-grid" ref={moviesScrollRef} onWheel={handleMovieWheel}>
+              {movies.map((movie) => (
+                <button
+                  type="button"
           key={movie.id}
           className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
           onClick={() => {
@@ -1561,27 +1584,31 @@ function App() {
             </div>
             <div className="movie-modal__sessions">
               <h3>{t(lang, 'section_sessions')}</h3>
-              <div className="session-grid">
-                {sessions.map((session) => (
-                  <button
-                    type="button"
-                    key={session.id}
-                    className={selectedSession?.id === session.id ? 'session-card is-active' : 'session-card'}
-                    onClick={() => {
-                      setSelectedSession(session)
-                      setShowMovie(false)
-                      setShowBooking(true)
-                      scrollToSection('seats')
-                    }}
-                  >
-                    <div>
-                      <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
-                      <span>{formatTime(session.start_time, locale)}</span>
-                    </div>
-                    <strong>{formatPrice(session.base_price, locale)}</strong>
-                  </button>
-                ))}
-              </div>
+              {movieSessions.length === 0 ? (
+                <p className="muted">{t(lang, 'no_sessions')}</p>
+              ) : (
+                <div className="session-grid">
+                  {movieSessions.map((session) => (
+                    <button
+                      type="button"
+                      key={session.id}
+                      className={selectedSession?.id === session.id ? 'session-card is-active' : 'session-card'}
+                      onClick={() => {
+                        setSelectedSession(session)
+                        setShowMovie(false)
+                        setShowBooking(true)
+                        scrollToSection('seats')
+                      }}
+                    >
+                      <div>
+                        <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
+                        <span>{formatTime(session.start_time, locale)}</span>
+                      </div>
+                      <strong>{formatPrice(session.base_price, locale)}</strong>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

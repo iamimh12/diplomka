@@ -212,6 +212,11 @@
   margin-top: 12px;
 }
 
+.panel__actions--inline {
+  margin-top: 10px;
+  gap: 8px;
+}
+
 .movie-grid {
   display: grid;
   gap: 16px;
