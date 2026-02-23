@@ -75,7 +75,8 @@
 
 .ghost.is-active {
   color: var(--ink);
-  background: var(--ghost-hover);
+  background: var(--ghost-active);
+  box-shadow: inset 0 0 0 1px var(--ghost-active-border);
 }
 
 .user-pill {
