@@ -99,6 +99,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_title: 'Название',
     placeholder_description: 'Описание',
     placeholder_duration: 'Длительность (мин)',
+    placeholder_country: 'Страна',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Ряды',
     placeholder_seats: 'Места',
@@ -116,6 +117,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     duration_unit: 'мин',
     seat_row_abbr: 'Р',
     seat_seat_abbr: 'М',
+    label_country: 'Страна',
+    go_to_seats: 'К местам',
     flash_account_created: 'Аккаунт создан.',
     flash_logged_in: 'Вы вошли в профиль.',
     flash_auth_error: 'Ошибка авторизации',
@@ -197,6 +200,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_title: 'Title',
     placeholder_description: 'Description',
     placeholder_duration: 'Duration (min)',
+    placeholder_country: 'Country',
     placeholder_poster: 'Poster URL',
     placeholder_rows: 'Rows',
     placeholder_seats: 'Seats',
@@ -214,6 +218,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     duration_unit: 'min',
     seat_row_abbr: 'R',
     seat_seat_abbr: 'S',
+    label_country: 'Country',
+    go_to_seats: 'Go to seats',
     flash_account_created: 'Account created.',
     flash_logged_in: 'Signed in.',
     flash_auth_error: 'Authorization error',
@@ -295,6 +301,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_title: 'Атауы',
     placeholder_description: 'Сипаттама',
     placeholder_duration: 'Ұзақтығы (мин)',
+    placeholder_country: 'Елі',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Қатарлар',
     placeholder_seats: 'Орындар',
@@ -312,6 +319,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     duration_unit: 'мин',
     seat_row_abbr: 'Қ',
     seat_seat_abbr: 'О',
+    label_country: 'Елі',
+    go_to_seats: 'Орындарға өту',
     flash_account_created: 'Аккаунт құрылды.',
     flash_logged_in: 'Профильге кірдіңіз.',
     flash_auth_error: 'Авторизация қатесі',
@@ -443,7 +452,13 @@ function App() {
 
   const [adminHalls, setAdminHalls] = useState<Hall[]>([])
   const [adminSessions, setAdminSessions] = useState<Session[]>([])
-  const [adminMovieForm, setAdminMovieForm] = useState({ title: '', description: '', duration: 90, poster: '' })
+  const [adminMovieForm, setAdminMovieForm] = useState({
+    title: '',
+    description: '',
+    duration: 90,
+    poster: '',
+    country: '',
+  })
   const [adminHallForm, setAdminHallForm] = useState({ name: '', rows: 8, cols: 12 })
   const [adminSessionForm, setAdminSessionForm] = useState({ movieId: 0, hallId: 0, start: '', price: 450 })
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null)
@@ -454,6 +469,8 @@ function App() {
   const [activeNav, setActiveNav] = useState<'sessions' | 'seats' | 'bookings' | null>(null)
   const [showProfile, setShowProfile] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
+  const [showMovie, setShowMovie] = useState(false)
+  const [activeMovie, setActiveMovie] = useState<Movie | null>(null)
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
@@ -765,6 +782,7 @@ function App() {
           description: adminMovieForm.description,
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
+          country: adminMovieForm.country,
         })
       } else {
         await adminCreateMovie(token, {
@@ -772,11 +790,12 @@ function App() {
           description: adminMovieForm.description,
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
+          country: adminMovieForm.country,
         })
       }
       const data = await fetchMovies()
       setMovies(data)
-      setAdminMovieForm({ title: '', description: '', duration: 90, poster: '' })
+      setAdminMovieForm({ title: '', description: '', duration: 90, poster: '', country: '' })
       setEditingMovieId(null)
       setFlash({ type: 'success', message: t(lang, 'flash_movie_saved') })
     } catch (err) {
@@ -906,6 +925,7 @@ function App() {
       description: movie.description,
       duration: movie.duration_mins,
       poster: movie.poster_url,
+      country: movie.country ?? '',
     })
   }
 
@@ -1040,26 +1060,28 @@ function App() {
               <h2>{t(lang, 'section_movies')}</h2>
               <p>{t(lang, 'section_movies_lead')}</p>
             </div>
-            <div className="movie-grid">
-              {movies.map((movie) => (
-                <button
-                  type="button"
-                  key={movie.id}
-                  className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
-                  onClick={() => {
-                    setSelectedMovie(movie)
-                    setSelectedSession(null)
-                  }}
-                >
-                  <img src={movie.poster_url} alt={movie.title} />
-                  <div className="movie-card__body">
-                    <h3>{movie.title}</h3>
-                    <p>{movie.description}</p>
-                    <span>{formatDuration(movie.duration_mins, lang)}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
+    <div className="movie-grid">
+      {movies.map((movie) => (
+        <button
+          type="button"
+          key={movie.id}
+          className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
+          onClick={() => {
+            setSelectedMovie(movie)
+            setSelectedSession(null)
+            setActiveMovie(movie)
+            setShowMovie(true)
+          }}
+        >
+          <img src={movie.poster_url} alt={movie.title} />
+          <div className="movie-card__body">
+            <h3>{movie.title}</h3>
+            <p>{movie.description}</p>
+            <span>{formatDuration(movie.duration_mins, lang)}</span>
+          </div>
+        </button>
+      ))}
+    </div>
           </div>
 
           <div className="panel" ref={sessionsRef}>
@@ -1201,6 +1223,11 @@ function App() {
                     type="number"
                     value={adminMovieForm.duration}
                     onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, duration: Number(e.target.value) }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_country')}
+                    value={adminMovieForm.country}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, country: e.target.value }))}
                   />
                   <input
                     placeholder={t(lang, 'placeholder_poster')}
@@ -1485,6 +1512,77 @@ function App() {
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showMovie && activeMovie && (
+        <div className="modal" onClick={() => setShowMovie(false)}>
+          <div className="modal__card modal__card--movie" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__header">
+              <div>
+                <h2>{activeMovie.title}</h2>
+                <p>{formatDuration(activeMovie.duration_mins, lang)}</p>
+              </div>
+              <button className="ghost" type="button" onClick={() => setShowMovie(false)}>
+                {t(lang, 'close')}
+              </button>
+            </div>
+            <div className="movie-modal">
+              <div className="movie-modal__poster">
+                <img src={activeMovie.poster_url} alt={activeMovie.title} />
+              </div>
+              <div className="movie-modal__info">
+                <div className="movie-modal__meta">
+                  <span>{t(lang, 'label_country')}</span>
+                  <strong>{activeMovie.country || '—'}</strong>
+                </div>
+                <p className="movie-modal__description">{activeMovie.description}</p>
+                <div className="movie-modal__actions">
+                  <button
+                    className="primary"
+                    type="button"
+                    onClick={() => setShowBooking(true)}
+                  >
+                    {t(lang, 'booking_submit')}
+                  </button>
+                  <button
+                    className="ghost"
+                    type="button"
+                    onClick={() => {
+                      setShowMovie(false)
+                      scrollToSection('seats')
+                    }}
+                  >
+                    {t(lang, 'go_to_seats')}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="movie-modal__sessions">
+              <h3>{t(lang, 'section_sessions')}</h3>
+              <div className="session-grid">
+                {sessions.map((session) => (
+                  <button
+                    type="button"
+                    key={session.id}
+                    className={selectedSession?.id === session.id ? 'session-card is-active' : 'session-card'}
+                    onClick={() => {
+                      setSelectedSession(session)
+                      setShowMovie(false)
+                      setShowBooking(true)
+                      scrollToSection('seats')
+                    }}
+                  >
+                    <div>
+                      <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
+                      <span>{formatTime(session.start_time, locale)}</span>
+                    </div>
+                    <strong>{formatPrice(session.base_price, locale)}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}

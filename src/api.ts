@@ -131,14 +131,21 @@ export async function cancelBooking(token: string, bookingId: number) {
   return request<Booking>(`/bookings/${bookingId}/cancel`, { method: 'PATCH' }, token)
 }
 
-export async function adminCreateMovie(token: string, payload: { title: string; description: string; duration_mins: number; poster_url: string }) {
+export async function adminCreateMovie(
+  token: string,
+  payload: { title: string; description: string; duration_mins: number; poster_url: string; country?: string }
+) {
   return request<Movie>('/admin/movies', {
     method: 'POST',
     body: JSON.stringify(payload),
   }, token)
 }
 
-export async function adminUpdateMovie(token: string, id: number, payload: Partial<{ title: string; description: string; duration_mins: number; poster_url: string }>) {
+export async function adminUpdateMovie(
+  token: string,
+  id: number,
+  payload: Partial<{ title: string; description: string; duration_mins: number; poster_url: string; country: string }>
+) {
   return request<Movie>(`/admin/movies/${id}`, {
     method: 'PUT',
     body: JSON.stringify(payload),

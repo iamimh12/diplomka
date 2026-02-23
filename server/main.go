@@ -50,6 +50,7 @@ type Movie struct {
     Description  string    `json:"description"`
     DurationMins int       `json:"duration_mins"`
     PosterURL    string    `json:"poster_url"`
+    Country      string    `json:"country"`
     CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -119,6 +120,7 @@ type MovieRequest struct {
     Description  string `json:"description"`
     DurationMins int    `json:"duration_mins"`
     PosterURL    string `json:"poster_url"`
+    Country      string `json:"country"`
 }
 
 type HallRequest struct {
@@ -468,6 +470,7 @@ func createMovie(db *gorm.DB) gin.HandlerFunc {
             Description:  strings.TrimSpace(req.Description),
             DurationMins: req.DurationMins,
             PosterURL:    strings.TrimSpace(req.PosterURL),
+            Country:      strings.TrimSpace(req.Country),
         }
         if err := db.Create(&movie).Error; err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create movie"})
@@ -497,6 +500,9 @@ func updateMovie(db *gorm.DB) gin.HandlerFunc {
         }
         if req.PosterURL != "" {
             updates["poster_url"] = strings.TrimSpace(req.PosterURL)
+        }
+        if req.Country != "" {
+            updates["country"] = strings.TrimSpace(req.Country)
         }
         if len(updates) == 0 {
             c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
@@ -1095,18 +1101,21 @@ func seedData(db *gorm.DB) error {
             Description:  "Драматичная история о выборе между карьерой и любовью на фоне ночного мегаполиса.",
             DurationMins: 114,
             PosterURL:    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
+            Country:      "Казахстан",
         },
         {
             Title:        "Предел орбиты",
             Description:  "Научно-фантастический триллер о первой экспедиции к далекой экзопланете.",
             DurationMins: 128,
             PosterURL:    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=600&q=80",
+            Country:      "США",
         },
         {
             Title:        "Лунный сон",
             Description:  "Лирическое путешествие по воспоминаниям, где музыка меняет ход времени.",
             DurationMins: 98,
             PosterURL:    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
+            Country:      "Франция",
         },
     }
     if err := db.Create(&movies).Error; err != nil {
