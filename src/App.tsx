@@ -461,7 +461,6 @@ function App() {
   const seatSeatAbbr = t(lang, 'seat_seat_abbr')
   const sessionsRef = useRef<HTMLDivElement | null>(null)
   const seatsRef = useRef<HTMLDivElement | null>(null)
-  const bookingsRef = useRef<HTMLDivElement | null>(null)
 
   const totalPrice = useMemo(() => {
     if (!selectedSession) return 0
@@ -567,7 +566,6 @@ function App() {
     const entries = [
       { key: 'sessions' as const, ref: sessionsRef },
       { key: 'seats' as const, ref: seatsRef },
-      { key: 'bookings' as const, ref: bookingsRef },
     ]
 
     const observer = new IntersectionObserver(
@@ -748,7 +746,10 @@ function App() {
     const map = {
       sessions: sessionsRef,
       seats: seatsRef,
-      bookings: bookingsRef,
+    }
+    if (target === 'bookings') {
+      setShowBooking(true)
+      return
     }
     map[target].current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -978,13 +979,6 @@ function App() {
             {theme === 'light' ? t(lang, 'theme_dark') : t(lang, 'theme_light')}
           </button>
           <button
-            className={showBooking ? 'ghost is-active' : 'ghost'}
-            type="button"
-            onClick={() => setShowBooking((prev) => !prev)}
-          >
-            {t(lang, 'booking')}
-          </button>
-          <button
             className={showProfile ? 'ghost is-active' : 'ghost'}
             type="button"
             onClick={() => setShowProfile((prev) => !prev)}
@@ -1095,6 +1089,16 @@ function App() {
             <div className="panel__header">
               <h2>{t(lang, 'section_seats')}</h2>
               <p>{t(lang, 'section_seats_lead')}</p>
+            </div>
+            <div className="panel__actions">
+              <button
+                className="primary"
+                type="button"
+                onClick={() => setShowBooking(true)}
+                disabled={!selectedSession || selectedSeatIds.length === 0 || loading}
+              >
+                {t(lang, 'booking_submit')}
+              </button>
             </div>
             {selectedSession ? (
               <div className="seats">
