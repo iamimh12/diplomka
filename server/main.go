@@ -1092,15 +1092,22 @@ func seedData(db *gorm.DB) error {
         return nil
     }
 
-    hall := Hall{Name: "Зал А", Rows: 8, Cols: 12}
-    if err := db.Create(&hall).Error; err != nil {
+    halls := []Hall{
+        {Name: "Зал А", Rows: 8, Cols: 12},
+        {Name: "Зал B", Rows: 10, Cols: 14},
+        {Name: "Зал C", Rows: 7, Cols: 10},
+        {Name: "Зал D", Rows: 9, Cols: 12},
+    }
+    if err := db.Create(&halls).Error; err != nil {
         return err
     }
 
-    seats := make([]Seat, 0, hall.Rows*hall.Cols)
-    for r := 1; r <= hall.Rows; r++ {
-        for n := 1; n <= hall.Cols; n++ {
-            seats = append(seats, Seat{HallID: hall.ID, Row: r, Number: n})
+    seats := make([]Seat, 0)
+    for _, hall := range halls {
+        for r := 1; r <= hall.Rows; r++ {
+            for n := 1; n <= hall.Cols; n++ {
+                seats = append(seats, Seat{HallID: hall.ID, Row: r, Number: n})
+            }
         }
     }
     if err := db.Create(&seats).Error; err != nil {
@@ -1140,13 +1147,32 @@ func seedData(db *gorm.DB) error {
         return err
     }
 
-    now := time.Now().Add(2 * time.Hour)
-    sessions := []Session{
-        {MovieID: movies[0].ID, HallID: hall.ID, StartTime: now.Add(2 * time.Hour), BasePrice: 450},
-        {MovieID: movies[0].ID, HallID: hall.ID, StartTime: now.Add(5 * time.Hour), BasePrice: 500},
-        {MovieID: movies[1].ID, HallID: hall.ID, StartTime: now.Add(3 * time.Hour), BasePrice: 480},
-        {MovieID: movies[1].ID, HallID: hall.ID, StartTime: now.Add(1 * time.Hour).Add(24 * time.Hour), BasePrice: 520},
-        {MovieID: movies[2].ID, HallID: hall.ID, StartTime: now.Add(4 * time.Hour).Add(24 * time.Hour), BasePrice: 430},
+    now := time.Now()
+    location := now.Location()
+    startTimes := []time.Duration{
+        6 * time.Hour,
+        9 * time.Hour,
+        12 * time.Hour,
+        15 * time.Hour,
+        18 * time.Hour,
+        21 * time.Hour,
+        23 * time.Hour,
+    }
+    sessions := make([]Session, 0)
+    for day := 0; day < 7; day++ {
+        baseDate := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location).AddDate(0, 0, day)
+        for hallIndex, hall := range halls {
+            for timeIndex, offset := range startTimes {
+                movieIndex := (day + hallIndex + timeIndex) % len(movies)
+                basePrice := 400 + (timeIndex * 30) + (hallIndex * 20)
+                sessions = append(sessions, Session{
+                    MovieID:   movies[movieIndex].ID,
+                    HallID:    hall.ID,
+                    StartTime: baseDate.Add(offset),
+                    BasePrice: basePrice,
+                })
+            }
+        }
     }
     if err := db.Create(&sessions).Error; err != nil {
         return err
