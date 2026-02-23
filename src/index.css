@@ -92,6 +92,22 @@
   color: var(--ink);
 }
 
+:root[data-theme='dark'] .modal__card--admin,
+:root[data-theme='dark'] .modal__card--admin h2,
+:root[data-theme='dark'] .modal__card--admin h3,
+:root[data-theme='dark'] .modal__card--admin p,
+:root[data-theme='dark'] .modal__card--admin span,
+:root[data-theme='dark'] .modal__card--admin label,
+:root[data-theme='dark'] .modal__card--admin .ghost,
+:root[data-theme='dark'] .modal__card--admin .tab {
+  color: var(--ink);
+}
+
+:root[data-theme='dark'] .modal__card--admin .admin__form input,
+:root[data-theme='dark'] .modal__card--admin .admin__form select {
+  color: var(--ink);
+}
+
 * {
   box-sizing: border-box;
 }

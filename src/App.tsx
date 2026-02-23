@@ -452,6 +452,8 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false)
   const [adminTab, setAdminTab] = useState<'movies' | 'halls' | 'sessions'>('movies')
   const [activeNav, setActiveNav] = useState<'sessions' | 'seats' | 'bookings' | null>(null)
+  const [showProfile, setShowProfile] = useState(false)
+  const [showBooking, setShowBooking] = useState(false)
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
@@ -736,6 +738,8 @@ function App() {
     setToken(null)
     setUser(null)
     setShowAdmin(false)
+    setShowProfile(false)
+    setShowBooking(false)
     localStorage.removeItem('kino_token')
   }
 
@@ -973,6 +977,20 @@ function App() {
           >
             {theme === 'light' ? t(lang, 'theme_dark') : t(lang, 'theme_light')}
           </button>
+          <button
+            className={showBooking ? 'ghost is-active' : 'ghost'}
+            type="button"
+            onClick={() => setShowBooking((prev) => !prev)}
+          >
+            {t(lang, 'booking')}
+          </button>
+          <button
+            className={showProfile ? 'ghost is-active' : 'ghost'}
+            type="button"
+            onClick={() => setShowProfile((prev) => !prev)}
+          >
+            {t(lang, 'profile')}
+          </button>
         </div>
         <div className="topbar__auth">
           {user ? (
@@ -1120,111 +1138,6 @@ function App() {
 
         <aside className="sidebar">
           {flash && <div className={`flash flash--${flash.type}`}>{flash.message}</div>}
-
-          <div className="panel panel--accent" ref={bookingsRef}>
-            <h2>{t(lang, 'booking')}</h2>
-            <div className="summary">
-              <div>
-                <span>{t(lang, 'booking_movie')}</span>
-                <strong>{selectedSession?.movie?.title ?? selectedMovie?.title ?? '—'}</strong>
-              </div>
-              <div>
-                <span>{t(lang, 'booking_time')}</span>
-                <strong>{selectedSession ? formatTime(selectedSession.start_time, locale) : '—'}</strong>
-              </div>
-              <div>
-                <span>{t(lang, 'booking_seats')}</span>
-                <strong>{selectedSeatLabels.length ? selectedSeatLabels.join(', ') : '—'}</strong>
-              </div>
-              <div>
-                <span>{t(lang, 'booking_total')}</span>
-                <strong>{totalPrice ? formatPrice(totalPrice, locale) : '—'}</strong>
-              </div>
-            </div>
-            <button className="primary" type="button" onClick={handleBooking} disabled={loading}>
-              {t(lang, 'booking_submit')}
-            </button>
-          </div>
-
-          <div className="panel">
-            <div className="panel__header">
-              <h2>{t(lang, 'profile')}</h2>
-              <p>{t(lang, 'profile_lead')}</p>
-            </div>
-            {!user ? (
-              <form className="auth" onSubmit={handleAuthSubmit}>
-                <div className="auth__tabs">
-                  <button
-                    type="button"
-                    className={authMode === 'login' ? 'tab is-active' : 'tab'}
-                    onClick={() => setAuthMode('login')}
-                  >
-                    {t(lang, 'auth_login')}
-                  </button>
-                  <button
-                    type="button"
-                    className={authMode === 'register' ? 'tab is-active' : 'tab'}
-                    onClick={() => setAuthMode('register')}
-                  >
-                    {t(lang, 'auth_register')}
-                  </button>
-                </div>
-                {authMode === 'register' && (
-                  <label>
-                    {t(lang, 'label_name')}
-                    <input value={authName} onChange={(e) => setAuthName(e.target.value)} />
-                  </label>
-                )}
-                <label>
-                  {t(lang, 'label_email')}
-                  <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
-                </label>
-                <label>
-                  {t(lang, 'label_password')}
-                  <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
-                </label>
-                <button className="primary" type="submit" disabled={loading}>
-                  {authMode === 'login' ? t(lang, 'auth_submit_login') : t(lang, 'auth_submit_register')}
-                </button>
-              </form>
-            ) : (
-              <div className="bookings">
-                {bookings.length === 0 ? (
-                  <p className="muted">{t(lang, 'no_bookings')}</p>
-                ) : (
-                  bookings.map((booking) => (
-                    <div key={booking.id} className="booking-card">
-                      <div className="booking-card__row">
-                        <strong>{booking.session?.movie?.title ?? t(lang, 'movie_fallback')}</strong>
-                        <span className={`tag ${booking.status === 'cancelled' ? 'tag--muted' : 'tag--accent'}`}>
-                          {booking.status === 'cancelled' ? t(lang, 'status_cancelled') : t(lang, 'status_confirmed')}
-                        </span>
-                      </div>
-                      <span>{booking.session ? formatTime(booking.session.start_time, locale) : ''}</span>
-                      <span>
-                        {t(lang, 'seats_prefix')}:{' '}
-                        {booking.seats?.map((seat) => `${seatRowAbbr}${seat.row}-${seatSeatAbbr}${seat.number}`).join(', ') ?? '—'}
-                      </span>
-                      <span>{formatPrice(booking.total_price, locale)}</span>
-                      <div className="booking-card__actions">
-                        <button type="button" className="ghost" onClick={() => handleShowQr(booking.id)}>
-                          {t(lang, 'qr')}
-                        </button>
-                        <button type="button" className="ghost" onClick={() => handleDownloadTicket(booking.id)}>
-                          {t(lang, 'pdf')}
-                        </button>
-                        {booking.status !== 'cancelled' && (
-                          <button type="button" className="ghost danger" onClick={() => handleCancelBooking(booking.id)}>
-                            {t(lang, 'cancel')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
         </aside>
       </main>
 
@@ -1442,6 +1355,132 @@ function App() {
             <button className="primary" type="button" onClick={closeQr}>
               {t(lang, 'close')}
             </button>
+          </div>
+        </div>
+      )}
+
+      {showBooking && (
+        <div className="modal" onClick={() => setShowBooking(false)}>
+          <div className="modal__card modal__card--booking" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__header">
+              <div>
+                <h2>{t(lang, 'booking')}</h2>
+                <p>{t(lang, 'section_sessions_lead')}</p>
+              </div>
+              <button className="ghost" type="button" onClick={() => setShowBooking(false)}>
+                {t(lang, 'close')}
+              </button>
+            </div>
+            <div className="summary">
+              <div>
+                <span>{t(lang, 'booking_movie')}</span>
+                <strong>{selectedSession?.movie?.title ?? selectedMovie?.title ?? '—'}</strong>
+              </div>
+              <div>
+                <span>{t(lang, 'booking_time')}</span>
+                <strong>{selectedSession ? formatTime(selectedSession.start_time, locale) : '—'}</strong>
+              </div>
+              <div>
+                <span>{t(lang, 'booking_seats')}</span>
+                <strong>{selectedSeatLabels.length ? selectedSeatLabels.join(', ') : '—'}</strong>
+              </div>
+              <div>
+                <span>{t(lang, 'booking_total')}</span>
+                <strong>{totalPrice ? formatPrice(totalPrice, locale) : '—'}</strong>
+              </div>
+            </div>
+            <button className="primary" type="button" onClick={handleBooking} disabled={loading}>
+              {t(lang, 'booking_submit')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showProfile && (
+        <div className="modal" onClick={() => setShowProfile(false)}>
+          <div className="modal__card modal__card--profile" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__header">
+              <div>
+                <h2>{t(lang, 'profile')}</h2>
+                <p>{t(lang, 'profile_lead')}</p>
+              </div>
+              <button className="ghost" type="button" onClick={() => setShowProfile(false)}>
+                {t(lang, 'close')}
+              </button>
+            </div>
+            {!user ? (
+              <form className="auth" onSubmit={handleAuthSubmit}>
+                <div className="auth__tabs">
+                  <button
+                    type="button"
+                    className={authMode === 'login' ? 'tab is-active' : 'tab'}
+                    onClick={() => setAuthMode('login')}
+                  >
+                    {t(lang, 'auth_login')}
+                  </button>
+                  <button
+                    type="button"
+                    className={authMode === 'register' ? 'tab is-active' : 'tab'}
+                    onClick={() => setAuthMode('register')}
+                  >
+                    {t(lang, 'auth_register')}
+                  </button>
+                </div>
+                {authMode === 'register' && (
+                  <label>
+                    {t(lang, 'label_name')}
+                    <input value={authName} onChange={(e) => setAuthName(e.target.value)} />
+                  </label>
+                )}
+                <label>
+                  {t(lang, 'label_email')}
+                  <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} />
+                </label>
+                <label>
+                  {t(lang, 'label_password')}
+                  <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} />
+                </label>
+                <button className="primary" type="submit" disabled={loading}>
+                  {authMode === 'login' ? t(lang, 'auth_submit_login') : t(lang, 'auth_submit_register')}
+                </button>
+              </form>
+            ) : (
+              <div className="bookings">
+                {bookings.length === 0 ? (
+                  <p className="muted">{t(lang, 'no_bookings')}</p>
+                ) : (
+                  bookings.map((booking) => (
+                    <div key={booking.id} className="booking-card">
+                      <div className="booking-card__row">
+                        <strong>{booking.session?.movie?.title ?? t(lang, 'movie_fallback')}</strong>
+                        <span className={`tag ${booking.status === 'cancelled' ? 'tag--muted' : 'tag--accent'}`}>
+                          {booking.status === 'cancelled' ? t(lang, 'status_cancelled') : t(lang, 'status_confirmed')}
+                        </span>
+                      </div>
+                      <span>{booking.session ? formatTime(booking.session.start_time, locale) : ''}</span>
+                      <span>
+                        {t(lang, 'seats_prefix')}:{' '}
+                        {booking.seats?.map((seat) => `${seatRowAbbr}${seat.row}-${seatSeatAbbr}${seat.number}`).join(', ') ?? '—'}
+                      </span>
+                      <span>{formatPrice(booking.total_price, locale)}</span>
+                      <div className="booking-card__actions">
+                        <button type="button" className="ghost" onClick={() => handleShowQr(booking.id)}>
+                          {t(lang, 'qr')}
+                        </button>
+                        <button type="button" className="ghost" onClick={() => handleDownloadTicket(booking.id)}>
+                          {t(lang, 'pdf')}
+                        </button>
+                        {booking.status !== 'cancelled' && (
+                          <button type="button" className="ghost danger" onClick={() => handleCancelBooking(booking.id)}>
+                            {t(lang, 'cancel')}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
