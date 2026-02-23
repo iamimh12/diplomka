@@ -699,6 +699,10 @@
   padding: clamp(16px, 4vw, 32px);
 }
 
+.modal--booking {
+  z-index: 20;
+}
+
 .modal__card--admin {
   max-width: min(1100px, 96vw);
   width: 100%;

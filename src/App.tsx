@@ -704,6 +704,23 @@ function App() {
     )
   }
 
+  function openBookingFromMovie(session?: Session) {
+    if (!activeMovie) {
+      setShowBooking(true)
+      return
+    }
+
+    const isSelectedSessionFromActiveMovie =
+      selectedSession &&
+      (selectedSession.movie_id === activeMovie.id || selectedSession.movie?.id === activeMovie.id)
+
+    const nextSession = session ?? (isSelectedSessionFromActiveMovie ? selectedSession : movieSessions[0])
+    if (nextSession) {
+      setSelectedSession(nextSession)
+    }
+    setShowBooking(true)
+  }
+
   async function handleAuthSubmit(event: React.FormEvent) {
     event.preventDefault()
     setLoading(true)
@@ -1520,7 +1537,7 @@ function App() {
       )}
 
       {showBooking && (
-        <div className="modal" onClick={() => setShowBooking(false)}>
+        <div className="modal modal--booking" onClick={() => setShowBooking(false)}>
           <div className="modal__card modal__card--booking" onClick={(e) => e.stopPropagation()}>
             <div className="admin__header">
               <div>
@@ -1549,6 +1566,58 @@ function App() {
                 <strong>{totalPrice ? formatPrice(totalPrice, locale) : '—'}</strong>
               </div>
             </div>
+            {activeMovie && movieSessions.length > 0 && (
+              <div className="movie-modal__sessions">
+                <h3>{t(lang, 'section_sessions')}</h3>
+                <div className="session-grid">
+                  {movieSessions.map((session) => (
+                    <button
+                      type="button"
+                      key={session.id}
+                      className={selectedSession?.id === session.id ? 'session-card is-active' : 'session-card'}
+                      onClick={() => setSelectedSession(session)}
+                    >
+                      <div>
+                        <p className="session-card__title">{session.movie?.title ?? activeMovie.title}</p>
+                        <span>{formatTime(session.start_time, locale)}</span>
+                      </div>
+                      <strong>{formatPrice(session.base_price, locale)}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {selectedSession ? (
+              <div className="seats">
+                <div className="screen">{t(lang, 'screen')}</div>
+                <div className="seat-grid">
+                  {groupedSeats.map(([row, rowSeats]) => (
+                    <div key={row} className="seat-row">
+                      <span className="seat-row__label">{row}</span>
+                      <div className="seat-row__cells">
+                        {rowSeats.map((seat) => {
+                          const isBooked = bookedSeatIds.includes(seat.id)
+                          const isSelected = selectedSeatIds.includes(seat.id)
+                          return (
+                            <button
+                              type="button"
+                              key={seat.id}
+                              className={isBooked ? 'seat is-booked' : isSelected ? 'seat is-selected' : 'seat'}
+                              onClick={() => toggleSeat(seat.id)}
+                              disabled={isBooked}
+                            >
+                              {seat.number}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="muted">{t(lang, 'select_session_hint')}</p>
+            )}
             <button className="primary" type="button" onClick={handleBooking} disabled={loading}>
               {t(lang, 'booking_submit')}
             </button>
@@ -1679,7 +1748,8 @@ function App() {
                   <button
                     className="primary"
                     type="button"
-                    onClick={() => setShowBooking(true)}
+                    onClick={() => openBookingFromMovie()}
+                    disabled={movieSessions.length === 0}
                   >
                     {t(lang, 'booking_submit')}
                   </button>
@@ -1708,10 +1778,7 @@ function App() {
                       key={session.id}
                       className={selectedSession?.id === session.id ? 'session-card is-active' : 'session-card'}
                       onClick={() => {
-                        setSelectedSession(session)
-                        setShowMovie(false)
-                        setShowBooking(true)
-                        scrollToSection('seats')
+                        openBookingFromMovie(session)
                       }}
                     >
                       <div>
