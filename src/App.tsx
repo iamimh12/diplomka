@@ -657,6 +657,37 @@ function getPaymentLabel(method: string | undefined, lang: Lang) {
   return method
 }
 
+async function prepareAvatarFile(file: File) {
+  const isRaster = file.type === 'image/jpeg' || file.type === 'image/png'
+  if (!isRaster) return file
+
+  const image = await createImageBitmap(file)
+  const maxSize = 512
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height))
+  if (scale === 1) {
+    image.close()
+    return file
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.round(image.width * scale)
+  canvas.height = Math.round(image.height * scale)
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    image.close()
+    return file
+  }
+  ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+  image.close()
+
+  const blob: Blob = await new Promise((resolve) => {
+    const quality = file.type === 'image/jpeg' ? 0.95 : undefined
+    canvas.toBlob((result) => resolve(result ?? file), file.type, quality)
+  })
+
+  return new File([blob], file.name, { type: file.type })
+}
+
 function toLocalInput(value: string) {
   const date = new Date(value)
   const off = date.getTimezoneOffset() * 60000
@@ -1026,7 +1057,8 @@ function App() {
     setLoading(true)
     setFlash(null)
     try {
-      const updated = await uploadAvatar(token, avatarFile)
+      const prepared = await prepareAvatarFile(avatarFile)
+      const updated = await uploadAvatar(token, prepared)
       setUser(updated)
       setAvatarFile(null)
       setFlash({ type: 'success', message: t(lang, 'flash_avatar_updated') })

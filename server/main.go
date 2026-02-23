@@ -209,6 +209,7 @@ func main() {
 
     gin.SetMode(gin.ReleaseMode)
     router := gin.New()
+    router.MaxMultipartMemory = 20 << 20
     router.Use(gin.Recovery())
     router.Use(ginLogger(logger))
     allowOrigins := parseOrigins(cfg.CorsOrigin)

@@ -123,9 +123,10 @@ export async function fetchMe(token: string) {
   return request<User>('/me', {}, token)
 }
 
-export async function uploadAvatar(token: string, file: File) {
+export async function uploadAvatar(token: string, file: Blob | File) {
   const formData = new FormData()
-  formData.append('avatar', file)
+  const filename = file instanceof File ? file.name : 'avatar.jpg'
+  formData.append('avatar', file, filename)
   const response = await fetch(`${API_BASE}/me/avatar`, {
     method: 'POST',
     headers: {
