@@ -449,6 +449,8 @@ function App() {
   const [editingMovieId, setEditingMovieId] = useState<number | null>(null)
   const [editingHallId, setEditingHallId] = useState<number | null>(null)
   const [editingSessionId, setEditingSessionId] = useState<number | null>(null)
+  const [showAdmin, setShowAdmin] = useState(false)
+  const [adminTab, setAdminTab] = useState<'movies' | 'halls' | 'sessions'>('movies')
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
@@ -548,6 +550,18 @@ function App() {
       })
       .catch((err: Error) => setFlash({ type: 'error', message: err.message }))
   }, [token, user?.is_admin, movies.length])
+
+  useEffect(() => {
+    if (!user?.is_admin) {
+      setShowAdmin(false)
+    }
+  }, [user?.is_admin])
+
+  useEffect(() => {
+    if (showAdmin) {
+      setAdminTab('movies')
+    }
+  }, [showAdmin])
 
   useEffect(() => {
     return () => {
@@ -690,6 +704,7 @@ function App() {
   function handleLogout() {
     setToken(null)
     setUser(null)
+    setShowAdmin(false)
     localStorage.removeItem('kino_token')
   }
 
@@ -873,7 +888,15 @@ function App() {
           <button className="ghost" type="button">{t(lang, 'nav_sessions')}</button>
           <button className="ghost" type="button">{t(lang, 'nav_seats')}</button>
           <button className="ghost" type="button">{t(lang, 'nav_bookings')}</button>
-          {user?.is_admin && <button className="ghost" type="button">{t(lang, 'nav_admin')}</button>}
+          {user?.is_admin && (
+            <button
+              className={showAdmin ? 'ghost is-active' : 'ghost'}
+              type="button"
+              onClick={() => setShowAdmin((prev) => !prev)}
+            >
+              {t(lang, 'nav_admin')}
+            </button>
+          )}
         </nav>
         <div className="topbar__controls">
           <label className="control">
@@ -1143,13 +1166,47 @@ function App() {
               </div>
             )}
           </div>
-          {user?.is_admin && (
-            <div className="panel admin">
-              <div className="panel__header">
+        </aside>
+      </main>
+
+      {user?.is_admin && showAdmin && (
+        <div className="modal modal--admin" onClick={() => setShowAdmin(false)}>
+          <div className="modal__card modal__card--admin" onClick={(e) => e.stopPropagation()}>
+            <div className="admin__header">
+              <div>
                 <h2>{t(lang, 'admin_title')}</h2>
                 <p>{t(lang, 'admin_lead')}</p>
               </div>
+              <button className="ghost" type="button" onClick={() => setShowAdmin(false)}>
+                {t(lang, 'close')}
+              </button>
+            </div>
 
+            <div className="admin__tabs">
+              <button
+                type="button"
+                className={adminTab === 'movies' ? 'tab is-active' : 'tab'}
+                onClick={() => setAdminTab('movies')}
+              >
+                {t(lang, 'admin_movies')}
+              </button>
+              <button
+                type="button"
+                className={adminTab === 'halls' ? 'tab is-active' : 'tab'}
+                onClick={() => setAdminTab('halls')}
+              >
+                {t(lang, 'admin_halls')}
+              </button>
+              <button
+                type="button"
+                className={adminTab === 'sessions' ? 'tab is-active' : 'tab'}
+                onClick={() => setAdminTab('sessions')}
+              >
+                {t(lang, 'admin_sessions')}
+              </button>
+            </div>
+
+            {adminTab === 'movies' && (
               <div className="admin__section">
                 <h3>{t(lang, 'admin_movies')}</h3>
                 <form className="admin__form" onSubmit={handleAdminMovieSubmit}>
@@ -1197,7 +1254,9 @@ function App() {
                   ))}
                 </div>
               </div>
+            )}
 
+            {adminTab === 'halls' && (
               <div className="admin__section">
                 <h3>{t(lang, 'admin_halls')}</h3>
                 <form className="admin__form" onSubmit={handleAdminHallSubmit}>
@@ -1247,7 +1306,9 @@ function App() {
                   ))}
                 </div>
               </div>
+            )}
 
+            {adminTab === 'sessions' && (
               <div className="admin__section">
                 <h3>{t(lang, 'admin_sessions')}</h3>
                 <form className="admin__form" onSubmit={handleAdminSessionSubmit}>
@@ -1307,10 +1368,10 @@ function App() {
                   ))}
                 </div>
               </div>
-            </div>
-          )}
-        </aside>
-      </main>
+            )}
+          </div>
+        </div>
+      )}
 
       {qrModal && (
         <div className="modal" onClick={closeQr}>

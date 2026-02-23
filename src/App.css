@@ -73,6 +73,11 @@
   background: var(--ghost-hover);
 }
 
+.ghost.is-active {
+  color: var(--ink);
+  background: var(--ghost-hover);
+}
+
 .user-pill {
   display: flex;
   align-items: center;
@@ -116,7 +121,7 @@
 
 .hero__lead {
   font-size: 18px;
-  color: var(--muted);
+  color: var(--muted-strong);
   max-width: 520px;
 }
 
@@ -129,7 +134,7 @@
 .meta__label {
   display: block;
   font-size: 12px;
-  color: var(--muted);
+  color: var(--muted-strong);
   text-transform: uppercase;
 }
 
@@ -196,7 +201,7 @@
 
 .panel__header p {
   margin: 0;
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 .movie-grid {
@@ -220,7 +225,10 @@
 .movie-card img {
   height: 200px;
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: var(--surface-strong);
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 .movie-card__body {
@@ -233,7 +241,7 @@
 
 .movie-card__body p {
   margin: 0 0 12px;
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 14px;
 }
 
@@ -241,7 +249,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 .movie-card.is-active {
@@ -350,7 +358,7 @@
 }
 
 .summary span {
-  color: var(--muted);
+  color: var(--muted-strong);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -383,7 +391,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 .auth input {
@@ -445,7 +453,7 @@
 }
 
 .muted {
-  color: var(--muted);
+  color: var(--muted-strong);
 }
 
 @media (max-width: 960px) {
@@ -472,10 +480,23 @@
   border: 1px solid var(--border);
 }
 
+.admin__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .admin__section {
   margin-top: 20px;
   display: grid;
   gap: 12px;
+}
+
+.admin__tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .admin__form {
@@ -579,4 +600,16 @@
 .modal__card img {
   width: 220px;
   height: 220px;
+}
+
+.modal--admin {
+  padding: clamp(16px, 4vw, 32px);
+}
+
+.modal__card--admin {
+  max-width: min(1100px, 96vw);
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  justify-items: stretch;
 }

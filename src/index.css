@@ -13,6 +13,7 @@
 
   --ink: #101115;
   --muted: #5a5f6a;
+  --muted-strong: #3d424c;
   --accent: #ff6b4a;
   --accent-strong: #ff3d2e;
   --accent-soft: rgba(255, 107, 74, 0.12);
@@ -41,10 +42,11 @@
 }
 
 :root[data-theme='dark'] {
-  color: #f5f5f5;
+  color: #f7f8fa;
   background-color: #0f1116;
-  --ink: #f5f5f5;
-  --muted: #a7acb5;
+  --ink: #f7f8fa;
+  --muted: #c4c9d3;
+  --muted-strong: #e0e4ec;
   --accent: #ff8b6b;
   --accent-strong: #ff6b4a;
   --accent-soft: rgba(255, 139, 107, 0.14);
