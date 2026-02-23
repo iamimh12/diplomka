@@ -51,6 +51,10 @@ func main() {
 		{Name: "Hall D", Rows: 9, Cols: 12},
 		{Name: "Hall E", Rows: 11, Cols: 16},
 		{Name: "Hall F", Rows: 6, Cols: 9},
+		{Name: "Hall G", Rows: 12, Cols: 18},
+		{Name: "Hall H", Rows: 10, Cols: 15},
+		{Name: "Hall I", Rows: 8, Cols: 11},
+		{Name: "Hall J", Rows: 14, Cols: 20},
 	}
 
 	for i := range halls {
