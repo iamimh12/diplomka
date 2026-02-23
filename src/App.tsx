@@ -100,6 +100,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_description: 'Описание',
     placeholder_duration: 'Длительность (мин)',
     placeholder_country: 'Страна',
+    placeholder_genres: 'Жанры',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Ряды',
     placeholder_seats: 'Места',
@@ -118,6 +119,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_row_abbr: 'Р',
     seat_seat_abbr: 'М',
     label_country: 'Страна',
+    label_genres: 'Жанры',
     go_to_seats: 'К местам',
     scroll_prev: 'Назад',
     scroll_next: 'Вперёд',
@@ -204,6 +206,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_description: 'Description',
     placeholder_duration: 'Duration (min)',
     placeholder_country: 'Country',
+    placeholder_genres: 'Genres',
     placeholder_poster: 'Poster URL',
     placeholder_rows: 'Rows',
     placeholder_seats: 'Seats',
@@ -222,6 +225,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_row_abbr: 'R',
     seat_seat_abbr: 'S',
     label_country: 'Country',
+    label_genres: 'Genres',
     go_to_seats: 'Go to seats',
     scroll_prev: 'Prev',
     scroll_next: 'Next',
@@ -308,6 +312,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     placeholder_description: 'Сипаттама',
     placeholder_duration: 'Ұзақтығы (мин)',
     placeholder_country: 'Елі',
+    placeholder_genres: 'Жанрлар',
     placeholder_poster: 'Постер URL',
     placeholder_rows: 'Қатарлар',
     placeholder_seats: 'Орындар',
@@ -326,6 +331,7 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     seat_row_abbr: 'Қ',
     seat_seat_abbr: 'О',
     label_country: 'Елі',
+    label_genres: 'Жанрлар',
     go_to_seats: 'Орындарға өту',
     scroll_prev: 'Артқа',
     scroll_next: 'Алға',
@@ -467,6 +473,7 @@ function App() {
     duration: 90,
     poster: '',
     country: '',
+    genres: '',
   })
   const [adminHallForm, setAdminHallForm] = useState({ name: '', rows: 8, cols: 12 })
   const [adminSessionForm, setAdminSessionForm] = useState({ movieId: 0, hallId: 0, start: '', price: 450 })
@@ -810,6 +817,7 @@ function App() {
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
           country: adminMovieForm.country,
+          genres: adminMovieForm.genres,
         })
       } else {
         await adminCreateMovie(token, {
@@ -818,11 +826,12 @@ function App() {
           duration_mins: adminMovieForm.duration,
           poster_url: adminMovieForm.poster,
           country: adminMovieForm.country,
+          genres: adminMovieForm.genres,
         })
       }
       const data = await fetchMovies()
       setMovies(data)
-      setAdminMovieForm({ title: '', description: '', duration: 90, poster: '', country: '' })
+      setAdminMovieForm({ title: '', description: '', duration: 90, poster: '', country: '', genres: '' })
       setEditingMovieId(null)
       setFlash({ type: 'success', message: t(lang, 'flash_movie_saved') })
     } catch (err) {
@@ -953,6 +962,7 @@ function App() {
       duration: movie.duration_mins,
       poster: movie.poster_url,
       country: movie.country ?? '',
+      genres: movie.genres ?? '',
     })
   }
 
@@ -1251,6 +1261,11 @@ function App() {
                     placeholder={t(lang, 'placeholder_country')}
                     value={adminMovieForm.country}
                     onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, country: e.target.value }))}
+                  />
+                  <input
+                    placeholder={t(lang, 'placeholder_genres')}
+                    value={adminMovieForm.genres}
+                    onChange={(e) => setAdminMovieForm((prev) => ({ ...prev, genres: e.target.value }))}
                   />
                   <input
                     placeholder={t(lang, 'placeholder_poster')}
@@ -1559,6 +1574,10 @@ function App() {
                 <div className="movie-modal__meta">
                   <span>{t(lang, 'label_country')}</span>
                   <strong>{activeMovie.country || '—'}</strong>
+                </div>
+                <div className="movie-modal__meta">
+                  <span>{t(lang, 'label_genres')}</span>
+                  <strong>{activeMovie.genres || '—'}</strong>
                 </div>
                 <p className="movie-modal__description">{activeMovie.description}</p>
                 <div className="movie-modal__actions">

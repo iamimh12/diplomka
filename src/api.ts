@@ -133,7 +133,14 @@ export async function cancelBooking(token: string, bookingId: number) {
 
 export async function adminCreateMovie(
   token: string,
-  payload: { title: string; description: string; duration_mins: number; poster_url: string; country?: string }
+  payload: {
+    title: string
+    description: string
+    duration_mins: number
+    poster_url: string
+    country?: string
+    genres?: string
+  }
 ) {
   return request<Movie>('/admin/movies', {
     method: 'POST',
@@ -144,7 +151,14 @@ export async function adminCreateMovie(
 export async function adminUpdateMovie(
   token: string,
   id: number,
-  payload: Partial<{ title: string; description: string; duration_mins: number; poster_url: string; country: string }>
+  payload: Partial<{
+    title: string
+    description: string
+    duration_mins: number
+    poster_url: string
+    country: string
+    genres: string
+  }>
 ) {
   return request<Movie>(`/admin/movies/${id}`, {
     method: 'PUT',

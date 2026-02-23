@@ -12,6 +12,7 @@ export type Movie = {
   duration_mins: number
   poster_url: string
   country?: string
+  genres?: string
 }
 
 export type Hall = {

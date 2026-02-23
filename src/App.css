@@ -229,6 +229,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
 }
 
 .movie-grid::-webkit-scrollbar {
