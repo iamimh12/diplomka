@@ -39,6 +39,8 @@
   --tag-muted-bg: rgba(90, 95, 106, 0.16);
   --tag-muted-ink: #5a5f6a;
   --overlay: rgba(16, 17, 21, 0.4);
+  --chip-bg: rgba(16, 17, 21, 0.08);
+  --chip-ink: #2b2f38;
   --page-bg:
     radial-gradient(circle at 20% 20%, rgba(255, 216, 190, 0.6), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(197, 232, 248, 0.7), transparent 40%),
@@ -76,6 +78,8 @@
   --tag-muted-bg: rgba(140, 146, 160, 0.2);
   --tag-muted-ink: #c7ccd6;
   --overlay: rgba(5, 6, 10, 0.7);
+  --chip-bg: rgba(255, 255, 255, 0.12);
+  --chip-ink: #f0f2f6;
   --page-bg:
     radial-gradient(circle at 20% 20%, rgba(255, 120, 80, 0.15), transparent 45%),
     radial-gradient(circle at 80% 0%, rgba(88, 140, 165, 0.2), transparent 40%),

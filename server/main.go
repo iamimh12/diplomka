@@ -52,6 +52,7 @@ type Movie struct {
     PosterURL    string    `json:"poster_url"`
     Country      string    `json:"country"`
     Genres       string    `json:"genres"`
+    ReleaseYear  int       `json:"release_year"`
     CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -123,6 +124,7 @@ type MovieRequest struct {
     PosterURL    string `json:"poster_url"`
     Country      string `json:"country"`
     Genres       string `json:"genres"`
+    ReleaseYear  int    `json:"release_year"`
 }
 
 type HallRequest struct {
@@ -474,6 +476,7 @@ func createMovie(db *gorm.DB) gin.HandlerFunc {
             PosterURL:    strings.TrimSpace(req.PosterURL),
             Country:      strings.TrimSpace(req.Country),
             Genres:       strings.TrimSpace(req.Genres),
+            ReleaseYear:  req.ReleaseYear,
         }
         if err := db.Create(&movie).Error; err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create movie"})
@@ -509,6 +512,9 @@ func updateMovie(db *gorm.DB) gin.HandlerFunc {
         }
         if req.Genres != "" {
             updates["genres"] = strings.TrimSpace(req.Genres)
+        }
+        if req.ReleaseYear > 0 {
+            updates["release_year"] = req.ReleaseYear
         }
         if len(updates) == 0 {
             c.JSON(http.StatusBadRequest, gin.H{"error": "no fields to update"})
@@ -1109,6 +1115,7 @@ func seedData(db *gorm.DB) error {
             PosterURL:    "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80",
             Country:      "Казахстан",
             Genres:       "Драма, Романтика",
+            ReleaseYear:  2023,
         },
         {
             Title:        "Предел орбиты",
@@ -1117,6 +1124,7 @@ func seedData(db *gorm.DB) error {
             PosterURL:    "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=600&q=80",
             Country:      "США",
             Genres:       "Фантастика, Триллер",
+            ReleaseYear:  2024,
         },
         {
             Title:        "Лунный сон",
@@ -1125,6 +1133,7 @@ func seedData(db *gorm.DB) error {
             PosterURL:    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
             Country:      "Франция",
             Genres:       "Драма, Артхаус",
+            ReleaseYear:  2022,
         },
     }
     if err := db.Create(&movies).Error; err != nil {

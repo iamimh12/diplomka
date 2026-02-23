@@ -13,6 +13,7 @@ export type Movie = {
   poster_url: string
   country?: string
   genres?: string
+  release_year?: number
 }
 
 export type Hall = {

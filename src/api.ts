@@ -140,6 +140,7 @@ export async function adminCreateMovie(
     poster_url: string
     country?: string
     genres?: string
+    release_year?: number
   }
 ) {
   return request<Movie>('/admin/movies', {
@@ -158,6 +159,7 @@ export async function adminUpdateMovie(
     poster_url: string
     country: string
     genres: string
+    release_year: number
   }>
 ) {
   return request<Movie>(`/admin/movies/${id}`, {
