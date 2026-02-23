@@ -85,6 +85,12 @@ body {
   color: var(--ink);
 }
 
+strong,
+b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 a {
   color: inherit;
   text-decoration: none;
