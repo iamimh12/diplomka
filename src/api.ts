@@ -29,6 +29,13 @@ function getApiUrlFromConfig() {
 
 const API_BASE = normalizeApiBase(getApiUrlFromConfig())
 
+export function getAssetUrl(path: string) {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  const base = API_BASE.replace(/\/api$/, '')
+  return `${base}${path}`
+}
+
 type ApiError = {
   error: string
 }
@@ -116,6 +123,32 @@ export async function fetchMe(token: string) {
   return request<User>('/me', {}, token)
 }
 
+export async function uploadAvatar(token: string, file: File) {
+  const formData = new FormData()
+  formData.append('avatar', file)
+  const response = await fetch(`${API_BASE}/me/avatar`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  })
+  const contentType = response.headers.get('content-type') ?? ''
+  const isJson = contentType.includes('application/json')
+  if (!isJson) {
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status})`)
+    }
+    throw new Error('API misconfigured: expected JSON response')
+  }
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const message = (data as ApiError).error || 'Request failed'
+    throw new Error(message)
+  }
+  return data as User
+}
+
 export async function updateProfile(token: string, payload: { name: string }) {
   return request<User>(
     '/me',
@@ -141,7 +174,10 @@ export async function changePassword(
   )
 }
 
-export async function createBooking(token: string, payload: { session_id: number; seat_ids: number[] }) {
+export async function createBooking(
+  token: string,
+  payload: { session_id: number; seat_ids: number[]; payment_method: string }
+) {
   return request<Booking>('/bookings', {
     method: 'POST',
     body: JSON.stringify(payload),

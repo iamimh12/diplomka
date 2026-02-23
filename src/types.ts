@@ -3,6 +3,7 @@
   name: string
   email: string
   is_admin: boolean
+  avatar_url?: string
 }
 
 export type Movie = {
@@ -53,7 +54,9 @@ export type Booking = {
   session_id: number
   status: string
   total_price: number
+  payment_method?: string
   created_at: string
   session?: Session
   seats?: Seat[]
 }
+

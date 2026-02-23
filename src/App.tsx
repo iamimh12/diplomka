@@ -21,6 +21,8 @@ import {
   fetchSeats,
   fetchSessions,
   fetchMe,
+  getAssetUrl,
+  uploadAvatar,
   updateProfile,
   changePassword,
   loginUser,
@@ -85,13 +87,19 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_email: 'Email',
     label_password: 'Пароль',
     label_nickname: 'Никнейм',
+    label_avatar: 'Аватар',
     label_current_password: 'Текущий пароль',
     label_new_password: 'Новый пароль',
     label_new_password_repeat: 'Повторите пароль',
+    label_payment_method: 'Способ оплаты',
+    payment_card: 'Карта',
+    payment_cash: 'Наличные',
+    payment_apple: 'Apple Pay',
     auth_submit_login: 'Войти',
     auth_submit_register: 'Создать аккаунт',
     button_save: 'Сохранить',
     button_update_password: 'Обновить пароль',
+    button_upload: 'Загрузить',
     profile_settings: 'Настройки профиля',
     profile_security: 'Смена пароля',
     profile_bookings: 'Ваши бронирования',
@@ -177,6 +185,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_password_updated: 'Пароль обновлен.',
     flash_password_update_failed: 'Не удалось обновить пароль',
     flash_password_mismatch: 'Пароли не совпадают.',
+    flash_avatar_updated: 'Аватар обновлен.',
+    flash_avatar_update_failed: 'Не удалось обновить аватар',
   },
   en: {
     nav_sessions: 'Sessions',
@@ -218,13 +228,19 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_email: 'Email',
     label_password: 'Password',
     label_nickname: 'Nickname',
+    label_avatar: 'Avatar',
     label_current_password: 'Current password',
     label_new_password: 'New password',
     label_new_password_repeat: 'Repeat password',
+    label_payment_method: 'Payment method',
+    payment_card: 'Card',
+    payment_cash: 'Cash',
+    payment_apple: 'Apple Pay',
     auth_submit_login: 'Sign in',
     auth_submit_register: 'Create account',
     button_save: 'Save',
     button_update_password: 'Update password',
+    button_upload: 'Upload',
     profile_settings: 'Profile settings',
     profile_security: 'Change password',
     profile_bookings: 'Your bookings',
@@ -310,6 +326,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_password_updated: 'Password updated.',
     flash_password_update_failed: 'Unable to update password',
     flash_password_mismatch: 'Passwords do not match.',
+    flash_avatar_updated: 'Avatar updated.',
+    flash_avatar_update_failed: 'Unable to update avatar',
   },
   kk: {
     nav_sessions: 'Сеанстар',
@@ -351,13 +369,19 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     label_email: 'Email',
     label_password: 'Құпиясөз',
     label_nickname: 'Никнейм',
+    label_avatar: 'Аватар',
     label_current_password: 'Ағымдағы құпиясөз',
     label_new_password: 'Жаңа құпиясөз',
     label_new_password_repeat: 'Құпиясөзді қайталаңыз',
+    label_payment_method: 'Төлем тәсілі',
+    payment_card: 'Карта',
+    payment_cash: 'Қолма-қол',
+    payment_apple: 'Apple Pay',
     auth_submit_login: 'Кіру',
     auth_submit_register: 'Тіркелу',
     button_save: 'Сақтау',
     button_update_password: 'Құпиясөзді жаңарту',
+    button_upload: 'Жүктеу',
     profile_settings: 'Профиль баптаулары',
     profile_security: 'Құпиясөзді өзгерту',
     profile_bookings: 'Сіздің брондаулар',
@@ -443,6 +467,8 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     flash_password_updated: 'Құпиясөз жаңартылды.',
     flash_password_update_failed: 'Құпиясөзді жаңарту мүмкін емес',
     flash_password_mismatch: 'Құпиясөздер сәйкес келмейді.',
+    flash_avatar_updated: 'Аватар жаңартылды.',
+    flash_avatar_update_failed: 'Аватарды жаңарту мүмкін емес',
   },
 }
 
@@ -623,6 +649,14 @@ function formatPrice(value: number, locale: string) {
   }).format(value)
 }
 
+function getPaymentLabel(method: string | undefined, lang: Lang) {
+  if (!method) return ''
+  if (method === 'card') return t(lang, 'payment_card')
+  if (method === 'cash') return t(lang, 'payment_cash')
+  if (method === 'apple_pay') return t(lang, 'payment_apple')
+  return method
+}
+
 function toLocalInput(value: string) {
   const date = new Date(value)
   const off = date.getTimezoneOffset() * 60000
@@ -666,6 +700,7 @@ function App() {
   const [profileCurrentPassword, setProfileCurrentPassword] = useState('')
   const [profileNewPassword, setProfileNewPassword] = useState('')
   const [profileRepeatPassword, setProfileRepeatPassword] = useState('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('kino_token'))
   const [user, setUser] = useState<User | null>(null)
 
@@ -701,6 +736,7 @@ function App() {
   const [activeMovie, setActiveMovie] = useState<Movie | null>(null)
   const [movieQuery, setMovieQuery] = useState('')
   const [genreFilter, setGenreFilter] = useState('all')
+  const [paymentMethod, setPaymentMethod] = useState('card')
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
@@ -774,6 +810,7 @@ function App() {
     setProfileCurrentPassword('')
     setProfileNewPassword('')
     setProfileRepeatPassword('')
+    setAvatarFile(null)
   }, [user])
 
   useEffect(() => {
@@ -983,6 +1020,24 @@ function App() {
     }
   }
 
+  async function handleAvatarUpload(event: React.FormEvent) {
+    event.preventDefault()
+    if (!token || !avatarFile) return
+    setLoading(true)
+    setFlash(null)
+    try {
+      const updated = await uploadAvatar(token, avatarFile)
+      setUser(updated)
+      setAvatarFile(null)
+      setFlash({ type: 'success', message: t(lang, 'flash_avatar_updated') })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t(lang, 'flash_avatar_update_failed')
+      setFlash({ type: 'error', message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleBooking() {
     if (!token || !selectedSession) {
       setFlash({ type: 'error', message: t(lang, 'flash_login_required') })
@@ -992,10 +1047,18 @@ function App() {
       setFlash({ type: 'error', message: t(lang, 'flash_select_seats') })
       return
     }
+    if (!paymentMethod) {
+      setFlash({ type: 'error', message: t(lang, 'flash_booking_failed') })
+      return
+    }
     setLoading(true)
     setFlash(null)
     try {
-      await createBooking(token, { session_id: selectedSession.id, seat_ids: selectedSeatIds })
+      await createBooking(token, {
+        session_id: selectedSession.id,
+        seat_ids: selectedSeatIds,
+        payment_method: paymentMethod,
+      })
       setFlash({ type: 'success', message: t(lang, 'flash_booking_confirmed') })
       const availability = await fetchAvailability(selectedSession.id)
       setBookedSeatIds(availability.booked_seat_ids)
@@ -1815,6 +1878,14 @@ function App() {
                 <strong>{totalPrice ? formatPrice(totalPrice, locale) : '—'}</strong>
               </div>
             </div>
+            <div className="payment">
+              <span>{t(lang, 'label_payment_method')}</span>
+              <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                <option value="card">{t(lang, 'payment_card')}</option>
+                <option value="apple_pay">{t(lang, 'payment_apple')}</option>
+                <option value="cash">{t(lang, 'payment_cash')}</option>
+              </select>
+            </div>
             {activeMovie && movieSessions.length > 0 && (
               <div className="movie-modal__sessions">
                 <h3>{t(lang, 'section_sessions')}</h3>
@@ -1930,6 +2001,30 @@ function App() {
                   <div className="profile__header">
                     <h3>{t(lang, 'profile_settings')}</h3>
                   </div>
+                  <form className="profile__avatar-form" onSubmit={handleAvatarUpload}>
+                    <div className="profile__avatar">
+                      <div className="avatar">
+                        {user.avatar_url ? (
+                          <img src={getAssetUrl(user.avatar_url)} alt={user.name} />
+                        ) : (
+                          <span>{user.name?.[0]?.toUpperCase() ?? 'U'}</span>
+                        )}
+                      </div>
+                      <div className="profile__avatar-actions">
+                        <label className="file-input">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setAvatarFile(e.target.files?.[0] ?? null)}
+                          />
+                          {t(lang, 'label_avatar')}
+                        </label>
+                        <button className="ghost" type="submit" disabled={loading || !avatarFile}>
+                          {t(lang, 'button_upload')}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                   <form className="auth" onSubmit={handleProfileUpdate}>
                     <label>
                       {t(lang, 'label_nickname')}
@@ -2002,6 +2097,9 @@ function App() {
                           <span>
                             {t(lang, 'seats_prefix')}:{' '}
                             {booking.seats?.map((seat) => `${seatRowAbbr}${seat.row}-${seatSeatAbbr}${seat.number}`).join(', ') ?? '—'}
+                          </span>
+                          <span>
+                            {t(lang, 'label_payment_method')}: {getPaymentLabel(booking.payment_method, lang) || '—'}
                           </span>
                           <span>{formatPrice(booking.total_price, locale)}</span>
                           <div className="booking-card__actions">

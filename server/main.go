@@ -7,6 +7,7 @@ import (
     "fmt"
     "net/http"
     "os"
+    "path/filepath"
     "strconv"
     "strings"
     "time"
@@ -41,6 +42,7 @@ type User struct {
     Email        string    `gorm:"uniqueIndex" json:"email"`
     PasswordHash string    `json:"-"`
     IsAdmin      bool      `json:"is_admin"`
+    AvatarURL    string    `json:"avatar_url"`
     CreatedAt    time.Time `json:"created_at"`
 }
 
@@ -95,6 +97,7 @@ type Booking struct {
     SessionID  uint      `json:"session_id"`
     Status     string    `json:"status"`
     TotalPrice int       `json:"total_price"`
+    PaymentMethod string `json:"payment_method"`
     CreatedAt  time.Time `json:"created_at"`
     Session    Session   `json:"session"`
     Seats      []Seat    `gorm:"many2many:booking_seats" json:"seats"`
@@ -128,6 +131,7 @@ type ChangePasswordRequest struct {
 type BookingRequest struct {
     SessionID uint   `json:"session_id"`
     SeatIDs   []uint `json:"seat_ids"`
+    PaymentMethod string `json:"payment_method"`
 }
 
 type BookingStatusRequest struct {
@@ -228,6 +232,7 @@ func main() {
         api.GET("/me", authMiddleware(cfg.JwtSecret), meHandler(db))
         api.PATCH("/me", authMiddleware(cfg.JwtSecret), updateMeHandler(db))
         api.PATCH("/me/password", authMiddleware(cfg.JwtSecret), changePasswordHandler(db))
+        api.POST("/me/avatar", authMiddleware(cfg.JwtSecret), uploadAvatarHandler(db))
 
         api.GET("/movies", listMovies(db))
         api.GET("/movies/:id", getMovie(db))
@@ -268,6 +273,8 @@ func main() {
     if port == "" {
         port = "8080"
     }
+
+    router.Static("/uploads", "./uploads")
 
     logger.Info("server starting", zap.String("port", port))
     if err := router.Run("0.0.0.0:" + port); err != nil {
@@ -530,6 +537,51 @@ func changePasswordHandler(db *gorm.DB) gin.HandlerFunc {
         }
 
         c.JSON(http.StatusOK, gin.H{"status": "ok"})
+    }
+}
+
+func uploadAvatarHandler(db *gorm.DB) gin.HandlerFunc {
+    return func(c *gin.Context) {
+        userID := c.GetUint("user_id")
+        file, err := c.FormFile("avatar")
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "avatar file is required"})
+            return
+        }
+
+        ext := strings.ToLower(filepath.Ext(file.Filename))
+        switch ext {
+        case ".jpg", ".jpeg", ".png", ".webp":
+        default:
+            c.JSON(http.StatusBadRequest, gin.H{"error": "unsupported file type"})
+            return
+        }
+
+        uploadDir := filepath.Join("uploads", "avatars")
+        if err := os.MkdirAll(uploadDir, 0755); err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to store avatar"})
+            return
+        }
+
+        filename := fmt.Sprintf("u%d-%d%s", userID, time.Now().UnixNano(), ext)
+        target := filepath.Join(uploadDir, filename)
+        if err := c.SaveUploadedFile(file, target); err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to store avatar"})
+            return
+        }
+
+        avatarURL := "/" + filepath.ToSlash(target)
+        if err := db.Model(&User{}).Where("id = ?", userID).Update("avatar_url", avatarURL).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update avatar"})
+            return
+        }
+
+        var user User
+        if err := db.First(&user, userID).Error; err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+            return
+        }
+        c.JSON(http.StatusOK, user)
     }
 }
 
@@ -944,8 +996,8 @@ func createBooking(db *gorm.DB) gin.HandlerFunc {
             c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
             return
         }
-        if req.SessionID == 0 || len(req.SeatIDs) == 0 {
-            c.JSON(http.StatusBadRequest, gin.H{"error": "session_id and seat_ids are required"})
+        if req.SessionID == 0 || len(req.SeatIDs) == 0 || strings.TrimSpace(req.PaymentMethod) == "" {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "session_id, seat_ids, payment_method are required"})
             return
         }
 
@@ -984,6 +1036,7 @@ func createBooking(db *gorm.DB) gin.HandlerFunc {
                 SessionID:  session.ID,
                 Status:     "confirmed",
                 TotalPrice: session.BasePrice * len(req.SeatIDs),
+                PaymentMethod: strings.TrimSpace(req.PaymentMethod),
             }
             if err := tx.Create(&booking).Error; err != nil {
                 return err
