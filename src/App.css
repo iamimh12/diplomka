@@ -220,6 +220,35 @@
 .panel__actions--inline {
   margin-top: 10px;
   gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.movie-search {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--ink);
+  padding: 6px 10px;
+  border-radius: 999px;
+  min-width: 180px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-strong);
+}
+
+.filter select {
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--ink);
+  padding: 6px 10px;
+  border-radius: 999px;
 }
 
 .movie-grid {
@@ -252,11 +281,13 @@
   transition: all 0.2s ease;
   color: var(--ink);
   scroll-snap-align: start;
+  display: grid;
+  grid-template-rows: 320px auto;
 }
 
 .movie-card img {
   width: 100%;
-  aspect-ratio: 3 / 4;
+  height: 320px;
   object-fit: cover;
   background: var(--surface-strong);
   box-sizing: border-box;

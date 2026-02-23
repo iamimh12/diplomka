@@ -126,6 +126,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     scroll_prev: 'Назад',
     scroll_next: 'Вперёд',
     no_sessions: 'Нет сеансов для выбранного фильма.',
+    search_placeholder: 'Поиск по названию',
+    filter_genre: 'Жанр',
+    filter_all: 'Все жанры',
     flash_account_created: 'Аккаунт создан.',
     flash_logged_in: 'Вы вошли в профиль.',
     flash_auth_error: 'Ошибка авторизации',
@@ -234,6 +237,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     scroll_prev: 'Prev',
     scroll_next: 'Next',
     no_sessions: 'No sessions for the selected movie.',
+    search_placeholder: 'Search by title',
+    filter_genre: 'Genre',
+    filter_all: 'All genres',
     flash_account_created: 'Account created.',
     flash_logged_in: 'Signed in.',
     flash_auth_error: 'Authorization error',
@@ -342,6 +348,9 @@ const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     scroll_prev: 'Артқа',
     scroll_next: 'Алға',
     no_sessions: 'Таңдалған фильмге сеанс жоқ.',
+    search_placeholder: 'Атауы бойынша іздеу',
+    filter_genre: 'Жанр',
+    filter_all: 'Барлық жанр',
     flash_account_created: 'Аккаунт құрылды.',
     flash_logged_in: 'Профильге кірдіңіз.',
     flash_auth_error: 'Авторизация қатесі',
@@ -494,6 +503,8 @@ function App() {
   const [showBooking, setShowBooking] = useState(false)
   const [showMovie, setShowMovie] = useState(false)
   const [activeMovie, setActiveMovie] = useState<Movie | null>(null)
+  const [movieQuery, setMovieQuery] = useState('')
+  const [genreFilter, setGenreFilter] = useState('all')
 
   const [qrModal, setQrModal] = useState<{ url: string; bookingId: number | null } | null>(null)
   const locale = useMemo(() => getLocale(lang), [lang])
@@ -658,6 +669,33 @@ function App() {
     if (!activeMovie) return []
     return sessions.filter((session) => session.movie_id === activeMovie.id || session.movie?.id === activeMovie.id)
   }, [activeMovie, sessions])
+
+  const genres = useMemo(() => {
+    const set = new Set<string>()
+    movies.forEach((movie) => {
+      movie.genres
+        ?.split(',')
+        .map((genre) => genre.trim())
+        .filter(Boolean)
+        .forEach((genre) => set.add(genre))
+    })
+    return Array.from(set).sort((a, b) => a.localeCompare(b))
+  }, [movies])
+
+  const filteredMovies = useMemo(() => {
+    const query = movieQuery.trim().toLowerCase()
+    return movies.filter((movie) => {
+      if (genreFilter !== 'all') {
+        const movieGenres = movie.genres
+          ?.split(',')
+          .map((genre) => genre.trim().toLowerCase())
+          .filter(Boolean)
+        if (!movieGenres?.includes(genreFilter.toLowerCase())) return false
+      }
+      if (!query) return true
+      return movie.title.toLowerCase().includes(query)
+    })
+  }, [genreFilter, movieQuery, movies])
 
   function toggleSeat(seatId: number) {
     if (bookedSeatIds.includes(seatId)) return
@@ -1103,6 +1141,23 @@ function App() {
               <h2>{t(lang, 'section_movies')}</h2>
               <p>{t(lang, 'section_movies_lead')}</p>
               <div className="panel__actions panel__actions--inline">
+                <input
+                  className="movie-search"
+                  placeholder={t(lang, 'search_placeholder')}
+                  value={movieQuery}
+                  onChange={(e) => setMovieQuery(e.target.value)}
+                />
+                <label className="filter">
+                  <span>{t(lang, 'filter_genre')}</span>
+                  <select value={genreFilter} onChange={(e) => setGenreFilter(e.target.value)}>
+                    <option value="all">{t(lang, 'filter_all')}</option>
+                    {genres.map((genre) => (
+                      <option key={genre} value={genre}>
+                        {genre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <button type="button" className="ghost" onClick={() => scrollMovies('prev')}>
                   {t(lang, 'scroll_prev')}
                 </button>
@@ -1112,10 +1167,10 @@ function App() {
               </div>
             </div>
             <div className="movie-grid" ref={moviesScrollRef} onWheel={handleMovieWheel}>
-              {movies.map((movie) => (
+              {filteredMovies.map((movie) => (
                 <button
                   type="button"
-          key={movie.id}
+                  key={movie.id}
           className={selectedMovie?.id === movie.id ? 'movie-card is-active' : 'movie-card'}
           onClick={() => {
             setSelectedMovie(movie)
